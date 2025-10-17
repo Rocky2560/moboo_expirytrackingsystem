@@ -47,10 +47,11 @@ public class AuthController {
                 session.setAttribute("user", user.getEmail());
                 session.setAttribute("userName", user.getName());
                 session.setAttribute("userRole", user.getRole().name());
+                session.setAttribute("franchiseId",user.getId());
 
-                if (user.getRole() == UserRole.FRANCHISE && user.getFranchise() != null) {
-                    session.setAttribute("franchiseId", user.getFranchise().getId());
-                }
+//                if (user.getRole() == UserRole.FRANCHISE && user.getFranchise() != null) {
+//                    session.setAttribute("franchiseId", user.getFranchise().getId());
+//                }
                 // Set SecurityContext so Spring Security knows user is authenticated
                 List<GrantedAuthority> authorities = List.of(
                         new SimpleGrantedAuthority("ROLE_" + user.getRole().name())

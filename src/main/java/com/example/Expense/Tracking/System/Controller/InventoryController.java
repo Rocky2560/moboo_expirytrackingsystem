@@ -226,9 +226,8 @@ public class InventoryController {
 
     @PostMapping("/franchises/add")
     public String addFranchise(@RequestParam String name,
-                               @RequestParam String email,
-                               @RequestParam String address) {
-        Franchise franchise = new Franchise(name, email, address);
+                               @RequestParam String email) {
+        Franchise franchise = new Franchise(name, email);
         franchiseService.saveFranchise(franchise);
         return "redirect:/dashboard";
     }

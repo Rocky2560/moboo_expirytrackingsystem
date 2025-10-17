@@ -19,8 +19,8 @@ public class Franchise {
     @Column(unique = true)
     private String email;
 
-    @NotBlank
-    private String address;
+//    @NotBlank
+//    private String address;
 
     @OneToMany(mappedBy = "franchise", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<InventoryItem> inventoryItems;
@@ -28,10 +28,10 @@ public class Franchise {
     // Constructors
     public Franchise() {}
 
-    public Franchise(String name, String email, String address) {
+    public Franchise(String name, String email) {
         this.name = name;
         this.email = email;
-        this.address = address;
+//        this.address = address;
     }
 
     // Getters and Setters
@@ -44,8 +44,8 @@ public class Franchise {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+//    public String getAddress() { return address; }
+//    public void setAddress(String address) { this.address = address; }
 
     public List<InventoryItem> getInventoryItems() { return inventoryItems; }
     public void setInventoryItems(List<InventoryItem> inventoryItems) { this.inventoryItems = inventoryItems; }

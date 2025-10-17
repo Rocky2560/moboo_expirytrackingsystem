@@ -29,15 +29,15 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // Create franchises
         Franchise centralLondon = franchiseRepository.save(
-                new Franchise("Moboo Central London", "central@moboo.com", "123 Oxford St, London")
+                new Franchise("Moboo Central London", "central@moboo.com")
         );
 
         Franchise manchester = franchiseRepository.save(
-                new Franchise("Moboo Manchester", "manchester@moboo.com", "456 Market St, Manchester")
+                new Franchise("Moboo Manchester", "manchester@moboo.com")
         );
 
         Franchise birmingham = franchiseRepository.save(
-                new Franchise("Moboo Birmingham", "birmingham@moboo.com", "789 Bullring, Birmingham")
+                new Franchise("Moboo Birmingham", "birmingham@moboo.com")
         );
 
         // Create users

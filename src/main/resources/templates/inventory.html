@@ -352,9 +352,9 @@
                                     <tr>
                                         <th>Item Name</th>
                                         <th>Category</th>
-                                        <th>Count</th>
-                                        <th>Expiry Date</th>
-                                        <th>Status</th>
+<!--                                        <th>Count</th>-->
+<!--                                        <th>Expiry Date</th>-->
+<!--                                        <th>Status</th>-->
                                         <th>Actions</th>
                                     </tr>
                                     </thead>
@@ -362,17 +362,17 @@
                                     <tr th:each="item : ${inventoryItems}">
                                         <td th:text="${item.name}">Tapioca Pearls</td>
                                         <td th:text="${item.category}">Ingredients</td>
-                                        <td>
-                                                <span th:text="${item.count}"
-                                                      th:class="${item.count < 10 ? 'text-warning fw-bold' : 'text-dark'}">25</span>
-                                        </td>
-                                        <td th:text="${#temporals.format(item.expiryDate, 'yyyy-MM-dd')}">2024-01-15</td>
-                                        <td>
-                                            <span th:if="${#strings.toUpperCase(item.status) == 'EXPIRED'}" class="badge bg-danger">Expired</span>
-                                            <span th:if="${#strings.toUpperCase(item.status) == 'EXPIRING_SOON'}" class="badge bg-warning text-dark">Expiring Soon</span>
-                                            <span th:if="${#strings.toUpperCase(item.status) == 'LOW_STOCK'}" class="badge bg-orange">Low Stock</span>
-                                            <span th:if="${#strings.toUpperCase(item.status) == 'GOOD'}" class="badge bg-success">Good</span>
-                                        </td>
+<!--                                        <td>-->
+<!--                                                <span th:text="${item.count}"-->
+<!--                                                      th:class="${item.count < 10 ? 'text-warning fw-bold' : 'text-dark'}">25</span>-->
+<!--                                        </td>-->
+<!--                                        <td th:text="${#temporals.format(item.expiryDate, 'yyyy-MM-dd')}">2024-01-15</td>-->
+<!--                                        <td>-->
+<!--                                            <span th:if="${#strings.toUpperCase(item.status) == 'EXPIRED'}" class="badge bg-danger">Expired</span>-->
+<!--                                            <span th:if="${#strings.toUpperCase(item.status) == 'EXPIRING_SOON'}" class="badge bg-warning text-dark">Expiring Soon</span>-->
+<!--                                            <span th:if="${#strings.toUpperCase(item.status) == 'LOW_STOCK'}" class="badge bg-orange">Low Stock</span>-->
+<!--                                            <span th:if="${#strings.toUpperCase(item.status) == 'GOOD'}" class="badge bg-success">Good</span>-->
+<!--                                        </td>-->
                                         <td>
                                             <button class="btn btn-sm btn-outline-primary"
                                                     data-bs-toggle="modal"

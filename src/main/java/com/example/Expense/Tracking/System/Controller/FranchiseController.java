@@ -134,9 +134,8 @@ public class FranchiseController {
     @PostMapping("franchises/add")
     public String addFranchise(@RequestParam String name,
                                @RequestParam String email,
-                               @RequestParam String address,
                                HttpSession session) {
-        Franchise franchise = new Franchise(name, email, address);
+        Franchise franchise = new Franchise(name, email);
         franchiseService.saveFranchise(franchise);
 
         // Create user for the new franchise
@@ -157,7 +156,7 @@ public class FranchiseController {
             );
         }
 
-        return "redirect:/franchises";
+        return "redirect:/dashboard?success=fadded";
     }
 
     @GetMapping("franchises/{id}")
@@ -200,7 +199,7 @@ public class FranchiseController {
         if (franchise != null) {
             franchise.setName(name);
             franchise.setEmail(email);
-            franchise.setAddress(address);
+//            franchise.setAddress(address);
             franchiseService.saveFranchise(franchise);
         }
 
