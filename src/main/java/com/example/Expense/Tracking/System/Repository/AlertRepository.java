@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AlertRepository extends JpaRepository<Alert, Long> {
@@ -21,6 +22,10 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
     List<Alert> findByFranchiseAndDateRange(@Param("franchise") Franchise franchise,
                                             @Param("startDate") LocalDateTime startDate,
                                             @Param("endDate") LocalDateTime endDate);
+
+    List<Alert> findByFranchise(Franchise franchise);
+
+    Optional<Alert> findById(Long id);
 
     long countByFranchiseAndResolved(Franchise franchise, boolean resolved);
     long countByResolved(boolean resolved);

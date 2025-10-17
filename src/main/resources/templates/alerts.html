@@ -1,18 +1,499 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Login</title>
-    <link rel="stylesheet" th:href="@{/style.css}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts - Moboo Inventory</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            --danger-gradient: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            --orange-gradient: linear-gradient(135deg, #fda085 0%, #f6d365 100%);
+        }
+
+        body {
+            background-color: #f8f9fc;
+            overflow-x: hidden;
+        }
+
+        .bg-orange {
+            background: var(--orange-gradient);
+        }
+
+        .sidebar {
+            background: white;
+            height: 100vh;
+            position: fixed;
+            width: 250px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link {
+            color: #333;
+            font-weight: 500;
+            padding: 10px 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link.active,
+        .sidebar .nav-link:hover {
+            background: var(--primary-gradient);
+            color: white !important;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                left: -250px;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 15px;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .btn-gradient {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success-gradient {
+            background: var(--success-gradient);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .table {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table th {
+            font-weight: 600;
+            background-color: #f1f3f6;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f8f9ff;
+        }
+
+        .navbar {
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+        }
+
+        .alert-card {
+            border-left: 4px solid #007bff;
+            transition: transform 0.2s ease;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .alert-card:hover {
+            transform: translateX(5px);
+        }
+        .alert-critical { border-left-color: #dc3545; }
+        .alert-warning { border-left-color: #ffc107; }
+        .alert-info { border-left-color: #17a2b8; }
+
+        .notification-status {
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .status-sent { background: #d4edda; color: #155724; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        .status-pending { background: #fff3cd; color: #856404; }
+
+        .retry-btn {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
-<body>
-<div class="login-container">
-    <h2>Login</h2>
-    <form action="/login" method="post">
-        <input type="text" name="username" placeholder="Username" required><br>
-        <input type="password" name="password" placeholder="Password" required><br>
-        <button type="submit">Login</button>
-    </form>
-    <p th:if="${error}" style="color:red" th:text="${error}"></p>
+<body class="bg-light">
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" th:if="${session.user == null}">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">Moboo Inventory Login</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/login}" method="post">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-gradient">Sign In</button>
+                    </div>
+                </form>
+                <div class="text-center mt-3 text-muted small">
+                    <p><strong>Admin:</strong> admin@moboo.com / admin123</p>
+                    <p><strong>Franchise:</strong> franchise@moboo.com / franchise123</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Main Layout -->
+<div th:if="${session.user != null}">
+    <!-- Sidebar -->
+    <nav class="sidebar d-none d-md-block">
+        <div class="p-4">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-primary text-white p-2 rounded-circle me-3">
+                    <i class="fas fa-mug-hot fa-lg"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 navbar-brand">Moboo Inventory</h5>
+                    <small class="text-muted" th:text="${session.userRole}">Role</small>
+                </div>
+            </div>
+
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/dashboard}">
+                        <i class="fas fa-home me-2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/inventory}">
+                        <i class="fas fa-box me-2"></i> Inventory
+                    </a>
+                </li>
+                <li class="nav-item" th:if="${session.userRole == 'ADMIN'}">
+                    <a class="nav-link" th:href="@{/franchises}">
+                        <i class="fas fa-store me-2"></i> Franchises
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/alerts}">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Alerts
+                    </a>
+                </li>
+            </ul>
+
+            <div class="mt-4">
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <div class="d-flex ms-auto">
+                        <div class="dropdown">
+                            <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-2"></i>
+                                <span th:text="${session.userName}">User Name</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form th:action="@{/logout}" method="post" class="d-inline">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid py-4">
+            <!-- Stats Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="card-icon bg-danger text-white">
+                                <i class="fas fa-bell-slash fa-lg"></i>
+                            </div>
+                            <h6 class="card-title mb-0">Total Alerts</h6>
+                            <h3 class="card-text mb-0" th:text="${totalAlerts}">12</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card stat-card border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="card-icon bg-success text-white">
+                                <i class="fas fa-check-circle fa-lg"></i>
+                            </div>
+                            <h6 class="card-title mb-0">Notifications Sent</h6>
+                            <h3 class="card-text mb-0" th:text="${sentNotifications}">8</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card stat-card border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="card-icon bg-warning text-white">
+                                <i class="fas fa-exclamation-triangle fa-lg"></i>
+                            </div>
+                            <h6 class="card-title mb-0">Failed Notifications</h6>
+                            <h3 class="card-text mb-0" th:text="${failedNotifications}">2</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card stat-card border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="card-icon bg-primary text-white">
+                                <i class="fas fa-sync-alt fa-lg"></i>
+                            </div>
+                            <h6 class="card-title mb-0">Critical Alerts</h6>
+                            <h3 class="card-text mb-0" th:text="${criticalAlerts}">3</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Filter by Status</label>
+                        <select class="form-select" id="statusFilter" onchange="applyFilter()">
+                            <option value="ALL" th:selected="${selectedStatus == 'ALL'}">All Alerts</option>
+                            <option value="CRITICAL" th:selected="${selectedStatus == 'CRITICAL'}">Critical Only</option>
+                            <option value="WARNING" th:selected="${selectedStatus == 'WARNING'}">Warnings Only</option>
+                            <option value="SENT" th:selected="${selectedStatus == 'SENT'}">Sent Notifications</option>
+                            <option value="FAILED" th:selected="${selectedStatus == 'FAILED'}">Failed Notifications</option>
+                            <option value="PENDING" th:selected="${selectedStatus == 'PENDING'}">Pending Notifications</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4" th:if="${userRole == 'ADMIN'}">
+                        <label class="form-label fw-bold">Select Franchise</label>
+                        <select class="form-select" id="franchiseFilter" onchange="applyFilter()">
+                            <option value="">All Franchises</option>
+                            <option th:each="franchise : ${franchises}"
+                                    th:value="${franchise.id}"
+                                    th:text="${franchise.name}"
+                                    th:selected="${selectedFranchiseId != null && selectedFranchiseId == franchise.id}">Franchise</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Show Resolved</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeResolved"
+                                   th:checked="${includeResolved}" onchange="applyFilter()">
+                            <label class="form-check-label" for="includeResolved">
+                                Include Resolved Alerts
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts List -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0">
+                            <h5 class="mb-0">Alert Notifications</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert-list">
+                                <div class="alert-card" th:each="alert : ${alerts}"
+                                     th:classappend="${alert.severity == 'CRITICAL' ? 'alert-critical' :
+                                         (alert.severity == 'WARNING' ? 'alert-warning' : 'alert-info')}">
+                                    <div class="d-flex align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="mb-1" th:text="${alert.message}">Expired Item: Tapioca Pearls</h6>
+                                                <span class="notification-status"
+                                                      th:classappend="${alert.notificationSent ? 'status-sent' :
+                                                          (alert.notificationFailed ? 'status-failed' : 'status-pending')}">
+                                                        <i th:if="${alert.notificationSent}" class="fas fa-check-circle me-1"></i>
+                                                        <i th:if="${alert.notificationFailed}" class="fas fa-times-circle me-1"></i>
+                                                        <i th:if="${!alert.notificationSent && !alert.notificationFailed}" class="fas fa-clock me-1"></i>
+                                                        <span th:if="${alert.notificationSent}">Sent</span>
+                                                        <span th:if="${alert.notificationFailed}">Failed</span>
+                                                        <span th:if="${!alert.notificationSent && !alert.notificationFailed}">Pending</span>
+                                                    </span>
+                                            </div>
+
+                                            <p class="text-muted mb-2" th:text="${alert.description}">Item expired on 2024-01-15</p>
+
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock me-2"></i>
+                                                    <span th:text="${#temporals.format(alert.createdAt, 'MMM dd, yyyy HH:mm')}">Jan 15, 2024 14:30</span>
+                                                    <span th:if="${alert.franchise != null}"> •
+                                                            <i class="fas fa-store me-1"></i>
+                                                            <span th:text="${alert.franchise.name}">Central London</span>
+                                                        </span>
+                                                    <span th:if="${alert.inventoryItem != null}"> •
+                                                            <i class="fas fa-box me-1"></i>
+                                                            <span th:text="${alert.inventoryItem.name}">Tapioca Pearls</span>
+                                                        </span>
+                                                </small>
+
+                                                <div class="d-flex gap-2">
+                                                    <form th:if="${!alert.resolved}" th:action="@{/alerts/{id}/resolve(id=${alert.id})}" method="post">
+                                                        <button type="submit" class="btn btn-sm btn-outline-success">
+                                                            <i class="fas fa-check me-1"></i> Resolve
+                                                        </button>
+                                                    </form>
+
+                                                    <form th:if="${alert.notificationFailed}" th:action="@{/alerts/retry/{id}(id=${alert.id})}" method="post">
+                                                        <button type="submit" class="btn btn-sm btn-outline-warning retry-btn">
+                                                            <i class="fas fa-redo me-1"></i> Retry
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+
+                                            <!-- Error message for failed notifications -->
+                                            <div th:if="${alert.notificationFailed && alert.notificationErrorMessage != null}"
+                                                 class="alert alert-danger mt-2 p-2 small">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                <strong>Send Failed:</strong>
+                                                <span th:text="${#strings.abbreviate(alert.notificationErrorMessage, 100)}">Error message...</span>
+                                                <span th:if="${#strings.length(alert.notificationErrorMessage) > 100}">...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div th:if="${#lists.isEmpty(alerts)}" class="text-center py-4">
+                                    <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No alerts found</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Auto-show login modal if user is not logged in
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) {
+            const modal = new bootstrap.Modal(loginModal);
+            modal.show();
+        }
+    });
+
+    function applyFilter() {
+        const statusFilter = document.getElementById('statusFilter').value;
+        const franchiseFilter = document.getElementById('franchiseFilter')?.value || '';
+        const includeResolved = document.getElementById('includeResolved').checked;
+        const currentUrl = new URL(window.location.href);
+
+        // Clear existing parameters
+        currentUrl.searchParams.delete('statusFilter');
+        currentUrl.searchParams.delete('franchiseId');
+        currentUrl.searchParams.delete('includeResolved');
+
+        // Add new parameters
+        if (statusFilter !== 'ALL') {
+            currentUrl.searchParams.set('statusFilter', statusFilter);
+        }
+        if (franchiseFilter !== '') {
+            currentUrl.searchParams.set('franchiseId', franchiseFilter);
+        }
+        if (includeResolved) {
+            currentUrl.searchParams.set('includeResolved', 'true');
+        }
+
+        window.location.href = currentUrl.toString();
+    }
+</script>
 </body>
 </html>

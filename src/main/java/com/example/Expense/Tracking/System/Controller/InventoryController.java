@@ -3,6 +3,8 @@ package com.example.Expense.Tracking.System.Controller;
 import com.example.Expense.Tracking.System.Entity.Franchise;
 import com.example.Expense.Tracking.System.Entity.InventoryAdjustment;
 import com.example.Expense.Tracking.System.Entity.User;
+import com.example.Expense.Tracking.System.Enum.AlertSeverity;
+import com.example.Expense.Tracking.System.Enum.AlertType;
 import com.example.Expense.Tracking.System.Service.EmailService;
 import com.example.Expense.Tracking.System.Service.FranchiseService;
 import com.example.Expense.Tracking.System.Service.InventoryService;
@@ -105,6 +107,83 @@ public class InventoryController {
         return "inventory";
     }
 
+    @PostMapping("/items/edit")
+    public String editItem(@RequestParam Long id,
+                           @RequestParam String name,
+                           @RequestParam String category,
+                           @RequestParam Integer count,
+                           @RequestParam LocalDate expiryDate,
+                           @RequestParam(required = false) Long franchiseId,
+                           HttpSession session) {
+
+        String userRole = (String) session.getAttribute("userRole");
+        InventoryItem existingItem = inventoryService.findById(id).orElse(null);
+
+        if (existingItem != null) {
+            // For franchise users, ensure they can only edit their own items
+            if ("FRANCHISE".equals(userRole)) {
+                Long userFranchiseId = (Long) session.getAttribute("franchiseId");
+                if (!existingItem.getFranchise().getId().equals(userFranchiseId)) {
+                    return "redirect:/dashboard?error=unauthorized";
+                }
+            }
+
+            // Update the item
+            existingItem.setName(name);
+            existingItem.setCategory(category);
+            existingItem.setCount(count);
+            existingItem.setExpiryDate(expiryDate);
+
+            // Update franchise only if admin
+            if ("ADMIN".equals(userRole) && franchiseId != null) {
+                Franchise newFranchise = franchiseService.findById(franchiseId).orElse(null);
+                if (newFranchise != null) {
+                    existingItem.setFranchise(newFranchise);
+                }
+            }
+
+            inventoryService.saveItem(existingItem);
+            return "redirect:/dashboard?success=updated"; // Add success parameter
+        }
+
+        return "redirect:/dashboard?error=update_failed";
+    }
+
+
+    @PostMapping("/items/delete")
+    public String deleteItem(@RequestParam Long id, HttpSession session) {
+        String userRole = (String) session.getAttribute("userRole");
+        InventoryItem itemToDelete = inventoryService.findById(id).orElse(null);
+
+        if (itemToDelete != null) {
+            // For franchise users, ensure they can only delete their own items
+            if ("FRANCHISE".equals(userRole)) {
+                Long userFranchiseId = (Long) session.getAttribute("franchiseId");
+                if (!itemToDelete.getFranchise().getId().equals(userFranchiseId)) {
+                    return "redirect:/dashboard?error=unauthorized";
+                }
+            }
+
+            // Create alert for deletion
+            String userEmail = (String) session.getAttribute("user");
+            User user = userService.findByEmail(userEmail).orElse(null);
+            if (user != null) {
+                alertService.createAlert(
+                        AlertType.INVENTORY_UPDATED,
+                        AlertSeverity.INFO,
+                        "Item Deleted: " + itemToDelete.getName(),
+                        "Item '" + itemToDelete.getName() + "' was deleted by " + user.getName(),
+                        null, itemToDelete.getFranchise(), user
+                );
+            }
+
+            inventoryService.deleteItem(id);
+            return "redirect:/dashboard?success=deleted"; // Add success parameter
+        }
+
+        return "redirect:/dashboard?error=item_not_found";
+    }
+
     @PostMapping("/items/add")
     public String addItem(@RequestParam String name,
                           @RequestParam String category,
@@ -128,7 +207,7 @@ public class InventoryController {
             inventoryService.saveItem(item);
         }
 
-        return "redirect:/dashboard";
+        return "redirect:/dashboard?success=added";
     }
     @PostMapping("/adjust")
     public String adjustItem(@RequestParam Long itemId,

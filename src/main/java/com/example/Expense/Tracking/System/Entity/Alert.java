@@ -32,7 +32,7 @@ public class Alert {
     @JoinColumn(name = "franchise_id")
     private Franchise franchise;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "created_by_user_id")
     private User createdBy;
 
@@ -40,6 +40,16 @@ public class Alert {
     @JoinColumn(name = "resolved_by_user_id")
     private User resolvedBy;
 
+
+    // Notification tracking fields
+    private boolean notificationSent = false;
+    private boolean notificationFailed = false;
+    private String notificationErrorMessage;
+    private LocalDateTime notificationSentAt;
+    private int notificationRetryCount = 0;
+
+    public Alert() {
+    }
 
     public Alert(AlertType type, AlertSeverity severity, String message, String description,
                  InventoryItem inventoryItem, Franchise franchise, User createdBy) {
@@ -53,6 +63,24 @@ public class Alert {
         this.resolved = false;
         this.createdAt = LocalDateTime.now();
     }
+
+    // Getters and Setters (including new notification fields)
+    public boolean isNotificationSent() { return notificationSent; }
+    public void setNotificationSent(boolean notificationSent) { this.notificationSent = notificationSent; }
+
+    public boolean isNotificationFailed() { return notificationFailed; }
+    public void setNotificationFailed(boolean notificationFailed) { this.notificationFailed = notificationFailed; }
+
+    public String getNotificationErrorMessage() { return notificationErrorMessage; }
+    public void setNotificationErrorMessage(String notificationErrorMessage) { this.notificationErrorMessage = notificationErrorMessage; }
+
+    public LocalDateTime getNotificationSentAt() { return notificationSentAt; }
+    public void setNotificationSentAt(LocalDateTime notificationSentAt) { this.notificationSentAt = notificationSentAt; }
+
+    public int getNotificationRetryCount() { return notificationRetryCount; }
+    public void setNotificationRetryCount(int notificationRetryCount) { this.notificationRetryCount = notificationRetryCount; }
+
+    public void incrementRetryCount() { this.notificationRetryCount++; }
 
     // Getters and Setters
     public Long getId() { return id; }

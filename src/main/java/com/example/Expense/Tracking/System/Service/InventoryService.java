@@ -4,14 +4,17 @@ package com.example.Expense.Tracking.System.Service;
 import com.example.Expense.Tracking.System.Entity.*;
 import com.example.Expense.Tracking.System.Enum.AlertSeverity;
 import com.example.Expense.Tracking.System.Enum.AlertType;
+import com.example.Expense.Tracking.System.Enum.UserRole;
 import com.example.Expense.Tracking.System.Repository.InventoryAdjustmentRepository;
 import com.example.Expense.Tracking.System.Repository.InventoryItemRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +39,8 @@ public class InventoryService {
 //    public InventoryItem saveItem(InventoryItem item) {
 //        return inventoryItemRepository.save(item);
 //    }
+
+
 
     public List<InventoryItem> getExpiredItems(Franchise franchise) {
         return inventoryItemRepository.findExpiredItems(franchise, LocalDate.now());
@@ -73,6 +78,20 @@ public class InventoryService {
     }
 
     @Transactional
+    public void deleteItem(Long id) {
+        // Also delete any associated adjustment records
+        InventoryItem item = inventoryItemRepository.findById(id).orElse(null);
+        if (item != null) {
+            inventoryAdjustmentRepository.deleteByInventoryItem(item);
+            inventoryItemRepository.deleteById(id);
+        }
+    }
+
+    public Optional<InventoryItem> findById(Long id) {
+        return inventoryItemRepository.findById(id);
+    }
+
+    @Transactional
     public void adjustItemCount(Long itemId, Integer newCount, String reason, User adjustedBy) {
         InventoryItem item = inventoryItemRepository.findById(itemId).orElse(null);
         if (item != null) {
@@ -84,17 +103,108 @@ public class InventoryService {
             InventoryAdjustment adjustment = new InventoryAdjustment(oldCount, newCount, reason, item, adjustedBy);
             inventoryAdjustmentRepository.save(adjustment);
 
-            // Create alert if needed
-            if (newCount < 10) {
-                AlertSeverity severity = newCount == 0 ? AlertSeverity.CRITICAL : AlertSeverity.WARNING;
-                AlertType type = newCount == 0 ? AlertType.ZERO_STOCK : AlertType.LOW_STOCK;
+            // Check and create alerts for low stock
+            checkAndCreateLowStockAlerts(item, adjustedBy);
+        }
+    }
 
-                alertService.createAlert(type, severity,
-                        (newCount == 0 ? "Zero Stock: " : "Low Stock: ") + item.getName(),
-                        "Stock adjusted to " + newCount + " units. Reason: " + reason,
-                        item, item.getFranchise(), adjustedBy);
+    // Method to check low stock and create alerts
+    private void checkAndCreateLowStockAlerts(InventoryItem item, User triggeredBy) {
+        // Critical low stock (below 5 units)
+        if (item.getCount() != null && item.getCount() < 5 && item.getCount() >= 0) {
+            // Check if alert already exists for this item
+            boolean alertExists = alertService.alertExistsForItem(item, AlertType.LOW_STOCK_CRITICAL);
+
+            if (!alertExists) {
+                String message = "Critical Low Stock: " + item.getName();
+                String description = "Stock level is " + item.getCount() + " units (below threshold of 5). Immediate action required.";
+
+                alertService.createAlertAndNotify(
+                        AlertType.LOW_STOCK_CRITICAL,
+                        AlertSeverity.CRITICAL,
+                        message,
+                        description,
+                        item,
+                        item.getFranchise(),
+                        triggeredBy != null ? triggeredBy : getSystemUser()
+                );
             }
         }
+        // Warning low stock (below 10 units but above 5)
+        else if (item.getCount() != null && item.getCount() < 10 && item.getCount() >= 5) {
+            boolean alertExists = alertService.alertExistsForItem(item, AlertType.LOW_STOCK);
+
+            if (!alertExists) {
+                String message = "Low Stock Warning: " + item.getName();
+                String description = "Stock level is " + item.getCount() + " units (below threshold of 10). Consider reordering soon.";
+
+                alertService.createAlertAndNotify(
+                        AlertType.LOW_STOCK,
+                        AlertSeverity.WARNING,
+                        message,
+                        description,
+                        item,
+                        item.getFranchise(),
+                        triggeredBy != null ? triggeredBy : getSystemUser()
+                );
+            }
+        }
+        // Clear low stock alerts if stock is restored
+        else if (item.getCount() != null && item.getCount() >= 10) {
+            alertService.resolveLowStockAlertsForItem(item);
+        }
+    }
+
+    // Add this to your InventoryService or create a separate ScheduledService
+    @Scheduled(fixedRate = 300000) // Check every 5 minutes
+    public void monitorLowStockItems() {
+        List<InventoryItem> allItems = inventoryItemRepository.findAll();
+        User systemUser = new User("System", "system@moboo.com", "system", UserRole.ADMIN);
+
+        for (InventoryItem item : allItems) {
+            // Only check items that haven't been recently adjusted (to avoid duplicate alerts)
+            if (item.getCount() != null) {
+                if (item.getCount() < 5) {
+                    // Critical low stock
+                    boolean alertExists = alertService.alertExistsForItem(item, AlertType.LOW_STOCK_CRITICAL);
+                    if (!alertExists) {
+                        String message = "Critical Low Stock: " + item.getName();
+                        String description = "Stock level is " + item.getCount() + " units (below threshold of 5). Immediate action required.";
+
+                        alertService.createAlertAndNotify(
+                                AlertType.LOW_STOCK_CRITICAL,
+                                AlertSeverity.CRITICAL,
+                                message,
+                                description,
+                                item,
+                                item.getFranchise(),
+                                systemUser
+                        );
+                    }
+                } else if (item.getCount() < 10) {
+                    // Warning low stock
+                    boolean alertExists = alertService.alertExistsForItem(item, AlertType.LOW_STOCK);
+                    if (!alertExists) {
+                        String message = "Low Stock Warning: " + item.getName();
+                        String description = "Stock level is " + item.getCount() + " units (below threshold of 10). Consider reordering soon.";
+
+                        alertService.createAlertAndNotify(
+                                AlertType.LOW_STOCK,
+                                AlertSeverity.WARNING,
+                                message,
+                                description,
+                                item,
+                                item.getFranchise(),
+                                systemUser
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    private User getSystemUser() {
+        return new User("System", "system@moboo.com", "system", UserRole.ADMIN);
     }
 
     public List<InventoryAdjustment> getAdjustmentHistory(Long itemId) {

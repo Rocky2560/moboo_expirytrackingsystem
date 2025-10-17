@@ -1,6 +1,7 @@
 package com.example.Expense.Tracking.System.Controller;
 
 import com.example.Expense.Tracking.System.Entity.Franchise;
+import com.example.Expense.Tracking.System.Enum.ItemStatus;
 import com.example.Expense.Tracking.System.Enum.UserRole;
 import com.example.Expense.Tracking.System.Entity.InventoryItem;
 import com.example.Expense.Tracking.System.Service.*;
@@ -10,9 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 public class DashboardController {
@@ -26,7 +29,8 @@ public class DashboardController {
     private UserService userService;
 
     @GetMapping("/dashboard")
-    public String dashboard(HttpSession session, Model model) {
+    public String dashboard(HttpSession session, Model model,
+                            @RequestParam(required = false) String statusFilter) {
         String userEmail = (String) session.getAttribute("user");
         if (userEmail == null) {
             return "dashboard"; // This will show login modal
@@ -34,25 +38,34 @@ public class DashboardController {
 
         String userRole = (String) session.getAttribute("userRole");
         model.addAttribute("userRole", userRole);
+        model.addAttribute("selectedStatus", statusFilter != null ? statusFilter : "ALL");
 
         if (UserRole.ADMIN.name().equals(userRole)) {
             // Admin view - show all franchises and items
             List<Franchise> franchises = franchiseService.getAllFranchises();
             List<InventoryItem> allItems = inventoryService.getAllItems();
 
-            model.addAttribute("franchises", franchises);
-            model.addAttribute("inventoryItems", allItems);
-            model.addAttribute("totalItems", inventoryService.getTotalItems());
+            // Apply status filter
+            List<InventoryItem> filteredItems = filterItemsByStatus(allItems, statusFilter);
 
-            // Calculate stats for all franchises combined
+            model.addAttribute("franchises", franchises);
+            model.addAttribute("inventoryItems", filteredItems);
+            model.addAttribute("totalItems", filteredItems.size());
+
+            // Calculate stats for filtered items only
             int expiredCount = 0;
             int expiringSoonCount = 0;
             int lowStockCount = 0;
 
-            for (Franchise franchise : franchises) {
-                expiredCount += inventoryService.getExpiredItems(franchise).size();
-                expiringSoonCount += inventoryService.getExpiringSoonItems(franchise).size();
-                lowStockCount += inventoryService.getLowStockItems(franchise).size();
+            for (InventoryItem item : filteredItems) {
+                ItemStatus status = item.getStatus();
+                if (status == ItemStatus.EXPIRED) {
+                    expiredCount++;
+                } else if (status == ItemStatus.EXPIRING_SOON) {
+                    expiringSoonCount++;
+                } else if (status == ItemStatus.LOW_STOCK) {
+                    lowStockCount++;
+                }
             }
 
             model.addAttribute("expiredCount", expiredCount);
@@ -66,11 +79,32 @@ public class DashboardController {
 
             if (franchise != null) {
                 List<InventoryItem> franchiseItems = inventoryService.getItemsByFranchise(franchise);
-                model.addAttribute("inventoryItems", franchiseItems);
-                model.addAttribute("totalItems", franchiseItems.size());
-                model.addAttribute("expiredCount", inventoryService.getExpiredItems(franchise).size());
-                model.addAttribute("expiringSoonCount", inventoryService.getExpiringSoonItems(franchise).size());
-                model.addAttribute("lowStockCount", inventoryService.getLowStockItems(franchise).size());
+
+                // Apply status filter
+                List<InventoryItem> filteredItems = filterItemsByStatus(franchiseItems, statusFilter);
+
+                model.addAttribute("inventoryItems", filteredItems);
+                model.addAttribute("totalItems", filteredItems.size());
+
+                // Calculate stats for filtered items
+                int expiredCount = 0;
+                int expiringSoonCount = 0;
+                int lowStockCount = 0;
+
+                for (InventoryItem item : filteredItems) {
+                    ItemStatus status = item.getStatus();
+                    if (status == ItemStatus.EXPIRED) {
+                        expiredCount++;
+                    } else if (status == ItemStatus.EXPIRING_SOON) {
+                        expiringSoonCount++;
+                    } else if (status == ItemStatus.LOW_STOCK) {
+                        lowStockCount++;
+                    }
+                }
+
+                model.addAttribute("expiredCount", expiredCount);
+                model.addAttribute("expiringSoonCount", expiringSoonCount);
+                model.addAttribute("lowStockCount", lowStockCount);
             }
         }
 
@@ -78,21 +112,19 @@ public class DashboardController {
         return "dashboard";
     }
 
-//    @GetMapping("/inventory")
-//    public String redirectToInventory() {
-//        return "redirect:/inventory";
-//    }
-//
-//    @GetMapping("/franchises")
-//    public String redirectToFranchises(HttpSession session) {
-//        if ("ADMIN".equals(session.getAttribute("userRole"))) {
-//            return "redirect:/franchises";
-//        }
-//        return "redirect:/dashboard";
-//    }
-//
-//    @GetMapping("/alerts")
-//    public String redirectToAlerts() {
-//        return "redirect:/alerts";
-//    }
+    // Helper method to filter items by status
+    private List<InventoryItem> filterItemsByStatus(List<InventoryItem> items, String statusFilter) {
+        if (statusFilter == null || "ALL".equals(statusFilter)) {
+            return items;
+        }
+
+        try {
+            ItemStatus filterStatus = ItemStatus.valueOf(statusFilter);
+            return items.stream()
+                    .filter(item -> item.getStatus() == filterStatus)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            return items; // Invalid status, return all items
+        }
+    }
 }

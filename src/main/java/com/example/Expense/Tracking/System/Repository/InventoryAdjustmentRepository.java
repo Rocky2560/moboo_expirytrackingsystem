@@ -10,4 +10,7 @@ import java.util.List;
 @Repository
 public interface InventoryAdjustmentRepository extends JpaRepository<InventoryAdjustment, Long> {
     List<InventoryAdjustment> findByInventoryItem(InventoryItem inventoryItem);
+
+    // Add this method for cascading delete
+    void deleteByInventoryItem(InventoryItem inventoryItem);
 }

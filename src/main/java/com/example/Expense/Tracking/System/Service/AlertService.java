@@ -5,12 +5,15 @@ import com.example.Expense.Tracking.System.Entity.*;
 import com.example.Expense.Tracking.System.Enum.*;
 import com.example.Expense.Tracking.System.Repository.AlertRepository;
 import com.example.Expense.Tracking.System.Repository.InventoryItemRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AlertService {
@@ -50,6 +53,24 @@ public class AlertService {
         return savedAlert;
     }
 
+    public Alert getAlertById(Long id) {
+       Alert alert = alertRepository.findById(id).orElse(null);
+        return alert;
+    }
+
+    public void resolveLowStockAlertsForItem(InventoryItem item) {
+        List<Alert> lowStockAlerts = alertRepository.findByFranchiseAndResolved(item.getFranchise(), false).stream()
+                .filter(alert -> (alert.getType() == AlertType.LOW_STOCK || alert.getType() == AlertType.LOW_STOCK_CRITICAL) &&
+                        alert.getInventoryItem() != null &&
+                        alert.getInventoryItem().getId().equals(item.getId()))
+                .collect(Collectors.toList());
+
+        User systemUser = new User("System", "system@moboo.com", "system", UserRole.ADMIN);
+        for (Alert alert : lowStockAlerts) {
+            resolveAlert(alert.getId(), systemUser);
+        }
+    }
+
     public void resolveAlert(Long alertId, User resolvedBy) {
         Alert alert = alertRepository.findById(alertId).orElse(null);
         if (alert != null) {
@@ -69,6 +90,42 @@ public class AlertService {
                     alert.getDescription()
             );
         }
+    }
+
+    @Transactional
+    public void updateAlert(Alert alert) {
+        alertRepository.save(alert);
+    }
+
+    public void createAlertAndNotify(AlertType type, AlertSeverity severity, String message, String description,
+                                     InventoryItem inventoryItem, Franchise franchise, User createdBy) {
+        Alert alert = new Alert(type, severity, message, description, inventoryItem, franchise, createdBy);
+        Alert savedAlert = alertRepository.save(alert);
+
+        // Send notification for critical and warning alerts
+        if (severity == AlertSeverity.CRITICAL || severity == AlertSeverity.WARNING) {
+            emailService.sendAlertEmail(savedAlert);
+        }
+    }
+
+    // Method to get alerts with notification status
+    public List<Alert> getAlertsWithNotificationStatus(Franchise franchise, boolean includeResolved) {
+        if (franchise != null) {
+            return includeResolved ?
+                    alertRepository.findByFranchise(franchise) :
+                    alertRepository.findByFranchiseAndResolved(franchise, false);
+        }
+        return includeResolved ?
+                alertRepository.findAll() :
+                alertRepository.findByResolved(false);
+    }
+
+    public boolean alertExistsForItem(InventoryItem item, AlertType alertType) {
+        List<Alert> existingAlerts = alertRepository.findByFranchiseAndResolved(item.getFranchise(), false);
+        return existingAlerts.stream()
+                .anyMatch(alert -> alert.getType() == alertType &&
+                        alert.getInventoryItem() != null &&
+                        alert.getInventoryItem().getId().equals(item.getId()));
     }
 
     // Scheduled task to check for inventory issues and create alerts

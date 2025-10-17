@@ -3,7 +3,10 @@ package com.example.Expense.Tracking.System.Controller;
 import com.example.Expense.Tracking.System.Entity.Franchise;
 import com.example.Expense.Tracking.System.Entity.InventoryItem;
 import com.example.Expense.Tracking.System.Entity.User;
+import com.example.Expense.Tracking.System.Enum.AlertSeverity;
+import com.example.Expense.Tracking.System.Enum.AlertType;
 import com.example.Expense.Tracking.System.Enum.ItemStatus;
+import com.example.Expense.Tracking.System.Enum.UserRole;
 import com.example.Expense.Tracking.System.Service.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +19,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/franchises")
 public class FranchiseController {
     @Autowired
     private FranchiseService franchiseService;
@@ -30,34 +32,106 @@ public class FranchiseController {
     @Autowired
     private UserService userService;
 
-    @GetMapping
-    public String franchisesDashboard(HttpSession session, Model model) {
+    @GetMapping("/franchises")
+    public String franchisesDashboard(HttpSession session, Model model,
+                                      @RequestParam(required = false) Long franchiseId,
+                                      @RequestParam(required = false) String statusFilter) {
         String userEmail = (String) session.getAttribute("user");
         if (userEmail == null || !"ADMIN".equals(session.getAttribute("userRole"))) {
             return "redirect:/dashboard";
         }
 
-        List<Franchise> franchises = franchiseService.getAllFranchises();
-        model.addAttribute("franchises", franchises);
+        // Get all franchises for the dropdown
+        List<Franchise> allFranchises = franchiseService.getAllFranchises();
+        model.addAttribute("franchises", allFranchises);
+        model.addAttribute("selectedFranchiseId", franchiseId);
+        model.addAttribute("selectedStatus", statusFilter != null ? statusFilter : "ALL");
 
-        // Add performance metrics for each franchise
-        franchises.forEach(franchise -> {
-            List<InventoryItem> items = inventoryService.getItemsByFranchise(franchise);
-            long totalItems = items.size();
-            long goodItems = items.stream()
-                    .filter(item -> item.getStatus() == ItemStatus.GOOD)
-                    .count();
-            double healthScore = totalItems > 0 ? (double) goodItems / totalItems * 100 : 0;
-            franchise.getInventoryItems().forEach(item -> {}); // Just to trigger lazy loading
-        });
+        List<InventoryItem> inventoryItems;
+        Franchise selectedFranchise = null;
 
-        model.addAttribute("totalFranchises", franchises.size());
-        model.addAttribute("activeAlerts", alertService.getActiveAlertsCount());
+        if (franchiseId != null) {
+            // Show inventory for specific franchise
+            selectedFranchise = franchiseService.findById(franchiseId).orElse(null);
+            if (selectedFranchise != null) {
+                inventoryItems = inventoryService.getItemsByFranchise(selectedFranchise);
+                model.addAttribute("selectedFranchise", selectedFranchise);
+            } else {
+                inventoryItems = List.of();
+            }
+        } else {
+            // Show all inventory across all franchises
+            inventoryItems = inventoryService.getAllItems();
+        }
+
+        // Apply status filter
+        List<InventoryItem> filteredItems = filterItemsByStatus(inventoryItems, statusFilter);
+        model.addAttribute("inventoryItems", filteredItems);
+        model.addAttribute("totalItems", filteredItems.size());
+
+        // Calculate stats for filtered items
+        long expiredCount = filteredItems.stream()
+                .filter(item -> item.getStatus() == ItemStatus.EXPIRED).count();
+        long expiringSoonCount = filteredItems.stream()
+                .filter(item -> item.getStatus() == ItemStatus.EXPIRING_SOON).count();
+        long lowStockCount = filteredItems.stream()
+                .filter(item -> item.getStatus() == ItemStatus.LOW_STOCK).count();
+
+        model.addAttribute("expiredCount", expiredCount);
+        model.addAttribute("expiringSoonCount", expiringSoonCount);
+        model.addAttribute("lowStockCount", lowStockCount);
+
+        // Check for critical low stock (below 5) and create alerts
+        checkAndCreateLowStockAlerts(filteredItems);
 
         return "franchises";
     }
 
-    @PostMapping("/add")
+    // Method to check for items with stock below 5 and create alerts
+    private void checkAndCreateLowStockAlerts(List<InventoryItem> items) {
+        User adminUser = new User("System", "system@moboo.com", "system", UserRole.ADMIN);
+
+        for (InventoryItem item : items) {
+            // Check if stock is below 5 (critical low stock)
+            if (item.getCount() != null && item.getCount() < 5 && item.getCount() >= 0) {
+                // Check if alert already exists for this item
+                boolean alertExists = alertService.alertExistsForItem(item, AlertType.LOW_STOCK_CRITICAL);
+
+                if (!alertExists) {
+                    String message = "Critical Low Stock: " + item.getName();
+                    String description = "Stock level is " + item.getCount() + " units (below threshold of 5). Immediate action required.";
+
+                    alertService.createAlert(
+                            AlertType.LOW_STOCK_CRITICAL,
+                            AlertSeverity.CRITICAL,
+                            message,
+                            description,
+                            item,
+                            item.getFranchise(),
+                            adminUser
+                    );
+                }
+            }
+        }
+    }
+
+    private List<InventoryItem> filterItemsByStatus(List<InventoryItem> items, String statusFilter) {
+        if (statusFilter == null || "ALL".equals(statusFilter)) {
+            return items;
+        }
+
+        try {
+            ItemStatus filterStatus = ItemStatus.valueOf(statusFilter);
+            return items.stream()
+                    .filter(item -> item.getStatus() == filterStatus)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            return items;
+        }
+    }
+
+
+    @PostMapping("franchises/add")
     public String addFranchise(@RequestParam String name,
                                @RequestParam String email,
                                @RequestParam String address,
@@ -86,7 +160,7 @@ public class FranchiseController {
         return "redirect:/franchises";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("franchises/{id}")
     public String franchiseDetails(@PathVariable Long id, Model model, HttpSession session) {
         if (!"ADMIN".equals(session.getAttribute("userRole"))) {
             return "redirect:/dashboard";
@@ -114,10 +188,10 @@ public class FranchiseController {
         // Alerts for this franchise
         model.addAttribute("activeAlerts", alertService.getActiveAlertsCountByFranchise(franchise));
 
-        return "franchise-details";
+        return "franchise";
     }
 
-    @PostMapping("/{id}/update")
+    @PostMapping("franchises/{id}/update")
     public String updateFranchise(@PathVariable Long id,
                                   @RequestParam String name,
                                   @RequestParam String email,
