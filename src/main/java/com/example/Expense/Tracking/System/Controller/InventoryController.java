@@ -78,6 +78,7 @@ public class InventoryController {
             Franchise franchise = franchiseService.findById(franchiseId).orElse(null);
 
             if (franchise != null) {
+                // ✅ ONLY ONE assignment - use the filtered results
                 List<InventoryItem> franchiseItems = inventoryService.searchItems(search, category, franchise);
                 model.addAttribute("inventoryItems", franchiseItems);
                 model.addAttribute("totalItems", franchiseItems.size());
@@ -92,10 +93,14 @@ public class InventoryController {
                 model.addAttribute("expiredCount",
                         franchiseItems.stream().filter(item -> item.getExpiryDate().isBefore(LocalDate.now())).count());
             }
+            // ❌ REMOVE these duplicate lines:
+            // List<InventoryItem> inventoryItems = inventoryService.getItemsByFranchise(franchise);
+            // model.addAttribute("inventoryItems", inventoryItems);
         }
 
         // Add categories for filter dropdown
         model.addAttribute("categories", inventoryService.getAllCategories());
+
 
         return "inventory";
     }
