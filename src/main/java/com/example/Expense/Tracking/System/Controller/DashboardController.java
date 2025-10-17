@@ -4,6 +4,7 @@ import com.example.Expense.Tracking.System.Entity.Franchise;
 import com.example.Expense.Tracking.System.Enum.ItemStatus;
 import com.example.Expense.Tracking.System.Enum.UserRole;
 import com.example.Expense.Tracking.System.Entity.InventoryItem;
+import com.example.Expense.Tracking.System.Entity.User;
 import com.example.Expense.Tracking.System.Service.*;
 
 import jakarta.servlet.http.HttpSession;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -74,38 +74,46 @@ public class DashboardController {
 
         } else {
             // Franchise view - show only their items
-            Long franchiseId = (Long) session.getAttribute("franchiseId");
-            Franchise franchise = franchiseService.findById(franchiseId).orElse(null);
+            // ✅ ADD PROPER AUTHORIZATION CHECK
+            String userEmailFromSession = (String) session.getAttribute("user");
+            User currentUser = userService.findByEmail(userEmailFromSession).orElse(null);
 
-            if (franchise != null) {
-                List<InventoryItem> franchiseItems = inventoryService.getItemsByFranchise(franchise);
-
-                // Apply status filter
-                List<InventoryItem> filteredItems = filterItemsByStatus(franchiseItems, statusFilter);
-
-                model.addAttribute("inventoryItems", filteredItems);
-                model.addAttribute("totalItems", filteredItems.size());
-
-                // Calculate stats for filtered items
-                int expiredCount = 0;
-                int expiringSoonCount = 0;
-                int lowStockCount = 0;
-
-                for (InventoryItem item : filteredItems) {
-                    ItemStatus status = item.getStatus();
-                    if (status == ItemStatus.EXPIRED) {
-                        expiredCount++;
-                    } else if (status == ItemStatus.EXPIRING_SOON) {
-                        expiringSoonCount++;
-                    } else if (status == ItemStatus.LOW_STOCK) {
-                        lowStockCount++;
-                    }
-                }
-
-                model.addAttribute("expiredCount", expiredCount);
-                model.addAttribute("expiringSoonCount", expiringSoonCount);
-                model.addAttribute("lowStockCount", lowStockCount);
+            if (currentUser == null ) {
+                // User doesn't have proper franchise association
+                return "redirect:/dashboard?error=unauthorized";
             }
+
+            Franchise franchise = currentUser.getFranchise();
+
+            // ✅ NOW SAFE - we know this user belongs to this franchise
+            List<InventoryItem> franchiseItems = inventoryService.getItemsByFranchise(franchise);
+
+            // Apply status filter
+            List<InventoryItem> filteredItems = filterItemsByStatus(franchiseItems, statusFilter);
+
+            model.addAttribute("inventoryItems", filteredItems);
+            model.addAttribute("totalItems", filteredItems.size());
+            model.addAttribute("currentFranchise", franchise); // Useful for UI
+
+            // Calculate stats for filtered items
+            int expiredCount = 0;
+            int expiringSoonCount = 0;
+            int lowStockCount = 0;
+
+            for (InventoryItem item : filteredItems) {
+                ItemStatus status = item.getStatus();
+                if (status == ItemStatus.EXPIRED) {
+                    expiredCount++;
+                } else if (status == ItemStatus.EXPIRING_SOON) {
+                    expiringSoonCount++;
+                } else if (status == ItemStatus.LOW_STOCK) {
+                    lowStockCount++;
+                }
+            }
+
+            model.addAttribute("expiredCount", expiredCount);
+            model.addAttribute("expiringSoonCount", expiringSoonCount);
+            model.addAttribute("lowStockCount", lowStockCount);
         }
 
         model.addAttribute("currentPage", "dashboard");

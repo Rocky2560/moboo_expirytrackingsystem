@@ -17,17 +17,21 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-                        .anyRequest().permitAll() // For demo purposes - in production, secure properly
-                )
-                .csrf(csrf -> csrf.disable()) // Disable CSRF for simplicity in demo
-                .formLogin(form -> form.disable()) // We handle login manually
-                .logout(logout -> logout.disable()); // We handle logout manually
+
+    @Bean public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(authz ->
+                        authz.requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").
+                                permitAll().anyRequest().permitAll())
+                // For demo purposes - in production, secure properly )
+                .csrf(csrf -> csrf.disable())
+                // Disable CSRF for simplicity in demo
+                .formLogin(form -> form.disable())
+                // We handle login manually
+                .logout(logout -> logout.disable());
+        // We handle logout manually return http.build(); }
 
         return http.build();
+
+
     }
 }

@@ -627,10 +627,10 @@
                                     th:text="${franchise.name}">Franchise</option>
                         </select>
                     </div>
-                    <input type="hidden" name="franchiseId" th:if="${session.userRole == 'FRANCHISE'}"
-                           th:value="${session.franchiseId}">
+                    <input type="hidden" name="franchiseId" th:if="${#strings.toUpperCase(session.userRole) == 'FRANCHISE'}"
+                           th:value="${session.franchiinventory/items/addseId}">
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer">inventory/items/add
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-gradient">Add Item</button>
                 </div>
