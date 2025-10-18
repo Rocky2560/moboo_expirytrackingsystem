@@ -198,7 +198,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="@{/alerts}">
+                    <a class="nav-link" th:href="@{/alerts}">
                         <i class="fas fa-exclamation-triangle me-2"></i> Alerts
                     </a>
                 </li>
@@ -746,8 +746,8 @@
             const rows = inventoryTable.querySelectorAll('tbody tr');
 
             rows.forEach(row => {
-                const itemName = row.cells[0].textContent.toLowerCase();
-                const itemCategory = row.cells[1].textContent;
+                const itemName = row.cells[1].textContent.toLowerCase();
+                const itemCategory = row.cells[2].textContent;
                 const matchesSearch = itemName.includes(searchTerm);
                 const matchesCategory = category === '' || itemCategory === category;
 
@@ -792,8 +792,8 @@
             const rows = inventoryTable.querySelectorAll('tbody tr');
 
             rows.forEach(row => {
-                const itemName = row.cells[0].textContent.toLowerCase();
-                const itemCategory = row.cells[1].textContent;
+                const itemName = row.cells[1].textContent.toLowerCase();
+                const itemCategory = row.cells[2].textContent;
                 const matchesSearch = itemName.includes(searchTerm);
                 const matchesCategory = category === '' || itemCategory === category;
 
