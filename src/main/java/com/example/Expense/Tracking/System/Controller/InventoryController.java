@@ -1,14 +1,11 @@
 package com.example.Expense.Tracking.System.Controller;
 
-import com.example.Expense.Tracking.System.Entity.Franchise;
-import com.example.Expense.Tracking.System.Entity.InventoryAdjustment;
-import com.example.Expense.Tracking.System.Entity.User;
+import com.example.Expense.Tracking.System.Entity.*;
 import com.example.Expense.Tracking.System.Enum.AlertSeverity;
 import com.example.Expense.Tracking.System.Enum.AlertType;
 import com.example.Expense.Tracking.System.Service.EmailService;
 import com.example.Expense.Tracking.System.Service.FranchiseService;
 import com.example.Expense.Tracking.System.Service.InventoryService;
-import com.example.Expense.Tracking.System.Entity.InventoryItem;
 import com.example.Expense.Tracking.System.Service.*;
 
 
@@ -41,6 +38,14 @@ public class InventoryController {
 
     @Autowired
     private AlertService alertService;
+
+    @Autowired
+    private ItemService service;
+
+    public InventoryController (ItemService itemService)
+    {
+        this.service = itemService;
+    }
 
     @GetMapping
     public String inventoryDashboard(HttpSession session, Model model,
@@ -101,10 +106,32 @@ public class InventoryController {
         }
 
         // Add categories for filter dropdown
+        model.addAttribute("listItems", service.getAllItems());
         model.addAttribute("categories", inventoryService.getAllCategories());
 
 
         return "inventory";
+    }
+
+    @PostMapping("items/save")
+    public String saveItem(@ModelAttribute("item") Item item) {
+        service.saveItem(item);
+        return "redirect:/inventory?success=added";
+    }
+
+    @PostMapping("items/update")
+    public String updateItem(@RequestParam("itemId") Long id, @ModelAttribute("item") Item item) {
+        Item existing = service.getItemById(id);
+        existing.setName(item.getName());
+        existing.setCategory(item.getCategory());
+        service.saveItem(existing);
+        return "redirect:/inventory?success=updated";
+    }
+
+    @PostMapping("item/delete")
+    public String deleteItem(@RequestParam("id") Long id) {
+        service.deleteItem(id);
+        return "redirect:/inventory?success=deleted";
     }
 
     @PostMapping("/items/edit")

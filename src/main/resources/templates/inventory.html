@@ -232,6 +232,21 @@
     <!-- Main Content -->
     <div class="main-content">
         <!-- Top Navbar -->
+        <div th:if="${param.success}" class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span th:switch="${param.success[0]}">
+                    <span th:case="'added'">Item added successfully!</span>
+                    <span th:case="'fadded'">Franchise added successfully!</span>
+                    <span th:case="'updated'">Item updated successfully!</span>
+                    <span th:case="'deleted'">Item deleted successfully!</span>
+                    <span th:case="*">Operation completed successfully!</span>
+                </span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
             <div class="container-fluid">
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -350,6 +365,7 @@
                                 <table class="table table-hover">
                                     <thead>
                                     <tr>
+                                        <th>S.N</th>
                                         <th>Item Name</th>
                                         <th>Category</th>
 <!--                                        <th>Count</th>-->
@@ -359,9 +375,10 @@
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    <tr th:each="item : ${inventoryItems}">
-                                        <td th:text="${item.name}">Tapioca Pearls</td>
-                                        <td th:text="${item.category}">Ingredients</td>
+                                    <tr th:each="item, itemcount : ${listItems}">
+                                        <td th:text="${itemcount.count}"></td>
+                                        <td th:text="${item.name}"></td>
+                                        <td th:text="${item.category}"></td>
 <!--                                        <td>-->
 <!--                                                <span th:text="${item.count}"-->
 <!--                                                      th:class="${item.count < 10 ? 'text-warning fw-bold' : 'text-dark'}">25</span>-->
@@ -379,10 +396,20 @@
                                                     th:data-bs-target="'#adjustModal' + ${item.id}">
                                                 <i class="fas fa-edit"></i> Adjust
                                             </button>
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    data-bs-toggle="modal"
+                                                    th:data-bs-target="'#deleteItemModal' + ${item.id}">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
                                         </td>
                                     </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                            <!-- Add the "No items found" message here -->
+                            <div class="text-center py-4" th:if="${#lists.isEmpty(listItems)}">
+                                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No inventory items found</p>
                             </div>
                         </div>
                     </div>
@@ -391,7 +418,61 @@
         </div>
     </div>
 </div>
+<div th:each="item : ${listItems}" class="modal fade" th:id="'deleteItemModal' + ${item.id}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/inventory/item/delete}" method="post">
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <div class="bg-danger text-white p-3 rounded-circle d-inline-block mb-3">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                    <p class="text-center">
+                        Are you sure you want to delete this item?<br>
+                        <strong th:text="${item.name}"></strong><br>
+                        <small class="text-muted">This action cannot be undone.</small>
+                    </p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" name="confirmStockDeletion" th:id="'confirmStockDeletion' + ${item.id}" value="true">
+                            <label class="form-check-label" th:for="'confirmStockDeletion' + ${item.id}">
+                                I understand that deleting this item will lose records
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <input type="hidden" name="id" th:value="${item.id}">
+                    <button type="submit" class="btn btn-danger delete-button"
+                            th:data-item-id="${item.id}" disabled>
+                        <i class="fas fa-trash me-1"></i> Delete Permanently
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle stock confirmation checkbox
+        const checkboxes = document.querySelectorAll('input[name="confirmStockDeletion"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const modal = this.closest('.modal');
+                const deleteButton = modal.querySelector('.delete-button');
+                deleteButton.disabled = !this.checked;
+            });
+        });
+    });
+</script>
 <!-- Add Item Modal -->
 <div class="modal fade" id="addItemModal" tabindex="-1">
     <div class="modal-dialog">
@@ -400,7 +481,7 @@
                 <h5 class="modal-title">Add New Item</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{/inventory/add}" method="post">
+            <form th:action="@{/inventory/items/save}" method="post">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Item Name</label>
@@ -416,22 +497,22 @@
                             <option value="Other">Other</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Count</label>
-                        <input type="number" class="form-control" name="count" min="0" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Expiry Date</label>
-                        <input type="date" class="form-control" name="expiryDate" required>
-                    </div>
-                    <div class="mb-3" th:if="${session.userRole == 'ADMIN'}">
-                        <label class="form-label">Franchise</label>
-                        <select class="form-select" name="franchiseId" required>
-                            <option th:each="franchise : ${franchises}"
-                                    th:value="${franchise.id}"
-                                    th:text="${franchise.name}">Franchise</option>
-                        </select>
-                    </div>
+<!--                    <div class="mb-3">-->
+<!--                        <label class="form-label">Count</label>-->
+<!--                        <input type="number" class="form-control" name="count" min="0" required>-->
+<!--                    </div>-->
+<!--                    <div class="mb-3">-->
+<!--                        <label class="form-label">Expiry Date</label>-->
+<!--                        <input type="date" class="form-control" name="expiryDate" required>-->
+<!--                    </div>-->
+<!--                    <div class="mb-3" th:if="${session.userRole == 'ADMIN'}">-->
+<!--                        <label class="form-label">Franchise</label>-->
+<!--                        <select class="form-select" name="franchiseId" required>-->
+<!--                            <option th:each="franchise : ${franchises}"-->
+<!--                                    th:value="${franchise.id}"-->
+<!--                                    th:text="${franchise.name}">Franchise</option>-->
+<!--                        </select>-->
+<!--                    </div>-->
                     <input type="hidden" name="franchiseId" th:if="${session.userRole == 'FRANCHISE'}"
                            th:value="${session.franchiseId}">
                 </div>
@@ -445,36 +526,40 @@
 </div>
 
 <!-- Adjust Item Modal -->
-<div th:each="item : ${inventoryItems}" class="modal fade" th:id="'adjustModal' + ${item.id}" tabindex="-1">
+<div th:each="item : ${listItems}" class="modal fade" th:id="'adjustModal' + ${item.id}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Adjust Stock: <span th:text="${item.name}">Item Name</span></h5>
+                <h5 class="modal-title">Edit Stock:</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{/inventory/adjust}" method="post">
+            <form th:action="@{/inventory/items/update}" method="post">
                 <div class="modal-body">
-                    <div class="text-center mb-3">
-                        <div class="health-indicator"
-                             th:classappend="${item.count == 0 ? 'health-critical' : (item.count < 10 ? 'health-warning' : 'health-good')}">
-                            <span th:text="${item.count}">25</span>
-                        </div>
-                        <p class="text-muted">Current Stock</p>
-                    </div>
+<!--                    <div class="text-center mb-3">-->
+<!--                        <div class="health-indicator"-->
+<!--                             th:classappend="${item.count == 0 ? 'health-critical' : (item.count < 10 ? 'health-warning' : 'health-good')}">-->
+<!--                            <span th:text="${item.count}">25</span>-->
+<!--                        </div>-->
+<!--                        <p class="text-muted">Current Stock</p>-->
+<!--                    </div>-->
 
                     <div class="mb-3">
-                        <label class="form-label">New Count</label>
-                        <input type="number" class="form-control" name="newCount"
-                               th:value="${item.count}" min="0" required>
+                        <label class="form-label">Item Name</label>
+                        <input type="text" class="form-control" name="name"  th:value="${item.name}" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Reason for Adjustment</label>
-                        <select class="form-select" name="reason" required>
-                            <option value="Stock Count">Stock Count</option>
-                            <option value="Theft/Damage">Theft/Damage</option>
-                            <option value="Waste">Waste</option>
-                            <option value="Delivery Received">Delivery Received</option>
-                            <option value="Other">Other</option>
+                        <label class="form-label">Category</label>
+                        <select class="form-select" name="category" required>
+                            <option th:value="'Ingredients'" th:text="'Ingredients'"
+                                    th:selected="${item.category == 'Ingredients'}">Ingredients</option>
+                            <option th:value="'Syrups'" th:text="'Syrups'"
+                                    th:selected="${item.category == 'Syrups'}">Syrups</option>
+                            <option th:value="'Fruits'" th:text="'Fruits'"
+                                    th:selected="${item.category == 'Fruits'}">Fruits</option>
+                            <option th:value="'Packaging'" th:text="'Packaging'"
+                                    th:selected="${item.category == 'Packaging'}">Packaging</option>
+                            <option th:value="'Other'" th:text="'Other'"
+                                    th:selected="${item.category == 'Other'}">Other</option>
                         </select>
                     </div>
                     <input type="hidden" name="itemId" th:value="${item.id}">
@@ -496,6 +581,41 @@
         if (loginModal) {
             const modal = new bootstrap.Modal(loginModal);
             modal.show();
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle stock confirmation checkbox for delete modals
+        const checkboxes = document.querySelectorAll('input[name="confirmStockDeletion"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const modal = this.closest('.modal');
+                const deleteButton = modal.querySelector('.delete-button');
+                deleteButton.disabled = !this.checked;
+            });
+        });
+
+        // Handle real-time search functionality
+        const searchInput = document.querySelector('input[name="search"]');
+        const tableRows = document.querySelectorAll('tbody tr');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+
+                tableRows.forEach(row => {
+                    const itemName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    const category = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+
+                    if (searchTerm === '' || itemName.includes(searchTerm) || category.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
         }
     });
 </script>
