@@ -143,6 +143,20 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                    <!-- ✅ Add error message display -->
+                    <div th:if="${param.error != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Invalid email or password
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- ✅ Alternative: Using flash attributes -->
+                    <div th:if="${loginError}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span th:text="${loginError}">Invalid credentials</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
                 <form th:action="@{/login}" method="post">
                     <div class="mb-3">
                         <label for="email" class="form-label">Email Address</label>

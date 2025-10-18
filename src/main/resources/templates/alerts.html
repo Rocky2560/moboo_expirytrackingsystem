@@ -374,7 +374,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Alerts List -->
             <div class="row">
                 <div class="col-12">
@@ -386,21 +385,22 @@
                             <div class="alert-list">
                                 <div class="alert-card" th:each="alert : ${alerts}"
                                      th:classappend="${alert.severity == 'CRITICAL' ? 'alert-critical' :
-                                         (alert.severity == 'WARNING' ? 'alert-warning' : 'alert-info')}">
+                             (alert.severity == 'WARNING' ? 'alert-warning' : 'alert-info')}">
+                                    <!-- Your existing alert content here (keep everything the same) -->
                                     <div class="d-flex align-items-start">
                                         <div class="flex-grow-1">
                                             <div class="d-flex justify-content-between align-items-start mb-2">
                                                 <h6 class="mb-1" th:text="${alert.message}">Expired Item: Tapioca Pearls</h6>
                                                 <span class="notification-status"
                                                       th:classappend="${alert.notificationSent ? 'status-sent' :
-                                                          (alert.notificationFailed ? 'status-failed' : 'status-pending')}">
-                                                        <i th:if="${alert.notificationSent}" class="fas fa-check-circle me-1"></i>
-                                                        <i th:if="${alert.notificationFailed}" class="fas fa-times-circle me-1"></i>
-                                                        <i th:if="${!alert.notificationSent && !alert.notificationFailed}" class="fas fa-clock me-1"></i>
-                                                        <span th:if="${alert.notificationSent}">Sent</span>
-                                                        <span th:if="${alert.notificationFailed}">Failed</span>
-                                                        <span th:if="${!alert.notificationSent && !alert.notificationFailed}">Pending</span>
-                                                    </span>
+                                              (alert.notificationFailed ? 'status-failed' : 'status-pending')}">
+                                            <i th:if="${alert.notificationSent}" class="fas fa-check-circle me-1"></i>
+                                            <i th:if="${alert.notificationFailed}" class="fas fa-times-circle me-1"></i>
+                                            <i th:if="${!alert.notificationSent && !alert.notificationFailed}" class="fas fa-clock me-1"></i>
+                                            <span th:if="${alert.notificationSent}">Sent</span>
+                                            <span th:if="${alert.notificationFailed}">Failed</span>
+                                            <span th:if="${!alert.notificationSent && !alert.notificationFailed}">Pending</span>
+                                        </span>
                                             </div>
 
                                             <p class="text-muted mb-2" th:text="${alert.description}">Item expired on 2024-01-15</p>
@@ -410,13 +410,13 @@
                                                     <i class="fas fa-clock me-2"></i>
                                                     <span th:text="${#temporals.format(alert.createdAt, 'MMM dd, yyyy HH:mm')}">Jan 15, 2024 14:30</span>
                                                     <span th:if="${alert.franchise != null}"> •
-                                                            <i class="fas fa-store me-1"></i>
-                                                            <span th:text="${alert.franchise.name}">Central London</span>
-                                                        </span>
+                                                <i class="fas fa-store me-1"></i>
+                                                <span th:text="${alert.franchise.name}">Central London</span>
+                                            </span>
                                                     <span th:if="${alert.inventoryItem != null}"> •
-                                                            <i class="fas fa-box me-1"></i>
-                                                            <span th:text="${alert.inventoryItem.name}">Tapioca Pearls</span>
-                                                        </span>
+                                                <i class="fas fa-box me-1"></i>
+                                                <span th:text="${alert.inventoryItem.name}">Tapioca Pearls</span>
+                                            </span>
                                                 </small>
 
                                                 <div class="d-flex gap-2">
@@ -455,6 +455,86 @@
                     </div>
                 </div>
             </div>
+            <!-- Alerts List -->
+<!--            <div class="row">-->
+<!--                <div class="col-12">-->
+<!--                    <div class="card border-0 shadow-sm">-->
+<!--                        <div class="card-header bg-white border-0">-->
+<!--                            <h5 class="mb-0">Alert Notifications</h5>-->
+<!--                        </div>-->
+<!--                        <div class="card-body">-->
+<!--                            <div class="alert-list">-->
+<!--                                <div class="alert-card" th:each="alert : ${alerts}"-->
+<!--                                     th:classappend="${alert.severity == 'CRITICAL' ? 'alert-critical' :-->
+<!--                                         (alert.severity == 'WARNING' ? 'alert-warning' : 'alert-info')}">-->
+<!--                                    <div class="d-flex align-items-start">-->
+<!--                                        <div class="flex-grow-1">-->
+<!--                                            <div class="d-flex justify-content-between align-items-start mb-2">-->
+<!--                                                <h6 class="mb-1" th:text="${alert.message}">Expired Item: Tapioca Pearls</h6>-->
+<!--                                                <span class="notification-status"-->
+<!--                                                      th:classappend="${alert.notificationSent ? 'status-sent' :-->
+<!--                                                          (alert.notificationFailed ? 'status-failed' : 'status-pending')}">-->
+<!--                                                        <i th:if="${alert.notificationSent}" class="fas fa-check-circle me-1"></i>-->
+<!--                                                        <i th:if="${alert.notificationFailed}" class="fas fa-times-circle me-1"></i>-->
+<!--                                                        <i th:if="${!alert.notificationSent && !alert.notificationFailed}" class="fas fa-clock me-1"></i>-->
+<!--                                                        <span th:if="${alert.notificationSent}">Sent</span>-->
+<!--                                                        <span th:if="${alert.notificationFailed}">Failed</span>-->
+<!--                                                        <span th:if="${!alert.notificationSent && !alert.notificationFailed}">Pending</span>-->
+<!--                                                    </span>-->
+<!--                                            </div>-->
+
+<!--                                            <p class="text-muted mb-2" th:text="${alert.description}">Item expired on 2024-01-15</p>-->
+
+<!--                                            <div class="d-flex justify-content-between align-items-center">-->
+<!--                                                <small class="text-muted">-->
+<!--                                                    <i class="fas fa-clock me-2"></i>-->
+<!--                                                    <span th:text="${#temporals.format(alert.createdAt, 'MMM dd, yyyy HH:mm')}">Jan 15, 2024 14:30</span>-->
+<!--                                                    <span th:if="${alert.franchise != null}"> •-->
+<!--                                                            <i class="fas fa-store me-1"></i>-->
+<!--                                                            <span th:text="${alert.franchise.name}">Central London</span>-->
+<!--                                                        </span>-->
+<!--                                                    <span th:if="${alert.inventoryItem != null}"> •-->
+<!--                                                            <i class="fas fa-box me-1"></i>-->
+<!--                                                            <span th:text="${alert.inventoryItem.name}">Tapioca Pearls</span>-->
+<!--                                                        </span>-->
+<!--                                                </small>-->
+
+<!--                                                <div class="d-flex gap-2">-->
+<!--                                                    <form th:if="${!alert.resolved}" th:action="@{/alerts/{id}/resolve(id=${alert.id})}" method="post">-->
+<!--                                                        <button type="submit" class="btn btn-sm btn-outline-success">-->
+<!--                                                            <i class="fas fa-check me-1"></i> Resolve-->
+<!--                                                        </button>-->
+<!--                                                    </form>-->
+
+<!--                                                    <form th:if="${alert.notificationFailed}" th:action="@{/alerts/retry/{id}(id=${alert.id})}" method="post">-->
+<!--                                                        <button type="submit" class="btn btn-sm btn-outline-warning retry-btn">-->
+<!--                                                            <i class="fas fa-redo me-1"></i> Retry-->
+<!--                                                        </button>-->
+<!--                                                    </form>-->
+<!--                                                </div>-->
+<!--                                            </div>-->
+
+<!--                                            &lt;!&ndash; Error message for failed notifications &ndash;&gt;-->
+<!--                                            <div th:if="${alert.notificationFailed && alert.notificationErrorMessage != null}"-->
+<!--                                                 class="alert alert-danger mt-2 p-2 small">-->
+<!--                                                <i class="fas fa-exclamation-triangle me-1"></i>-->
+<!--                                                <strong>Send Failed:</strong>-->
+<!--                                                <span th:text="${#strings.abbreviate(alert.notificationErrorMessage, 100)}">Error message...</span>-->
+<!--                                                <span th:if="${#strings.length(alert.notificationErrorMessage) > 100}">...</span>-->
+<!--                                            </div>-->
+<!--                                        </div>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+
+<!--                                <div th:if="${#lists.isEmpty(alerts)}" class="text-center py-4">-->
+<!--                                    <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>-->
+<!--                                    <p class="text-muted">No alerts found</p>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
         </div>
     </div>
 </div>

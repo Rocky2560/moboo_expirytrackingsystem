@@ -52,23 +52,31 @@ public class AlertController {
             List<Franchise> allFranchises = franchiseService.getAllFranchises();
             model.addAttribute("franchises", allFranchises);
 
-            if (franchiseId != null) {
+            // Admin can see all franchises' alerts or filter by specific franchise
+            if (franchiseId != null && franchiseId > 0) {
                 selectedFranchise = franchiseService.findById(franchiseId).orElse(null);
                 if (selectedFranchise != null) {
                     alerts = alertService.getAlertsWithNotificationStatus(selectedFranchise, includeResolved != null && includeResolved);
                     model.addAttribute("selectedFranchise", selectedFranchise);
                 } else {
-                    alerts = List.of();
+                    // If franchise not found, show all alerts (or empty list - your choice)
+                    alerts = alertService.getAlertsWithNotificationStatus(null, includeResolved != null && includeResolved);
                 }
             } else {
+                // Show alerts from ALL franchises when no specific franchise is selected
                 alerts = alertService.getAlertsWithNotificationStatus(null, includeResolved != null && includeResolved);
             }
         } else {
+            // Franchise users can only see their own franchise alerts
             Long userFranchiseId = (Long) session.getAttribute("franchiseId");
-            Franchise userFranchise = franchiseService.findById(userFranchiseId).orElse(null);
-            if (userFranchise != null) {
-                alerts = alertService.getAlertsWithNotificationStatus(userFranchise, includeResolved != null && includeResolved);
-                model.addAttribute("selectedFranchise", userFranchise);
+            if (userFranchiseId != null && userFranchiseId > 0) {
+                Franchise userFranchise = franchiseService.findById(userFranchiseId).orElse(null);
+                if (userFranchise != null) {
+                    alerts = alertService.getAlertsWithNotificationStatus(userFranchise, includeResolved != null && includeResolved);
+                    model.addAttribute("selectedFranchise", userFranchise);
+                } else {
+                    alerts = List.of();
+                }
             } else {
                 alerts = List.of();
             }

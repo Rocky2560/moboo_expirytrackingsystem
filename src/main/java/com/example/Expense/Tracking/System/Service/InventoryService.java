@@ -36,6 +36,10 @@ public class InventoryService {
         return inventoryItemRepository.findByFranchise(franchise);
     }
 
+//    public List<InventoryItem> getItemsByFranchise(Franchise franchise) {
+//        return inventoryItemRepository.findByFranchise(franchise);
+//    }
+
 //    public InventoryItem saveItem(InventoryItem item) {
 //        return inventoryItemRepository.save(item);
 //    }
@@ -234,5 +238,9 @@ public class InventoryService {
                 .map(InventoryItem::getCategory)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    public List<InventoryItem> getItemsWithoutFranchise() {
+        return inventoryItemRepository.findByFranchiseIsNull();
     }
 }

@@ -329,7 +329,7 @@
             <div class="row mb-4">
                 <div class="col-md-8">
                     <div class="d-flex flex-wrap gap-3">
-                        <button class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                        <button class="btn btn-gradient" th:if="${session.userRole == 'ADMIN'}" data-bs-toggle="modal" data-bs-target="#addItemModal">
                             <i class="fas fa-plus me-2"></i> Add Item
                         </button>
 
@@ -371,7 +371,7 @@
 <!--                                        <th>Count</th>-->
 <!--                                        <th>Expiry Date</th>-->
 <!--                                        <th>Status</th>-->
-                                        <th>Actions</th>
+                                        <th th:if="${session.userRole == 'ADMIN'}">Actions</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -391,12 +391,12 @@
 <!--                                            <span th:if="${#strings.toUpperCase(item.status) == 'GOOD'}" class="badge bg-success">Good</span>-->
 <!--                                        </td>-->
                                         <td>
-                                            <button class="btn btn-sm btn-outline-primary"
+                                            <button class="btn btn-sm btn-outline-primary" th:if="${session.userRole == 'ADMIN'}"
                                                     data-bs-toggle="modal"
                                                     th:data-bs-target="'#adjustModal' + ${item.id}">
                                                 <i class="fas fa-edit"></i> Adjust
                                             </button>
-                                            <button class="btn btn-sm btn-outline-danger"
+                                            <button class="btn btn-sm btn-outline-danger" th:if="${session.userRole == 'ADMIN'}"
                                                     data-bs-toggle="modal"
                                                     th:data-bs-target="'#deleteItemModal' + ${item.id}">
                                                 <i class="fas fa-trash"></i> Delete

@@ -23,4 +23,6 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, Lo
 
     @Query("SELECT i FROM InventoryItem i WHERE i.franchise = :franchise AND i.count < 10")
     List<InventoryItem> findLowStockItems(@Param("franchise") Franchise franchise);
+
+    List<InventoryItem> findByFranchiseIsNull();
 }
