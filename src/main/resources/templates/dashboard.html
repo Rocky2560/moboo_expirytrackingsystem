@@ -41,6 +41,25 @@
          border-radius: 10px;
          transition: all 0.3s ease;
        }
+             .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sidebar-logo {
+            width: 30px;
+            height: 30px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: white;
+            font-size: 14px;
+        }
 
        .sidebar .nav-link.active,
        .sidebar .nav-link:hover {
@@ -214,6 +233,11 @@
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/alerts}">
                         <i class="fas fa-exclamation-triangle me-2"></i> Alerts
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/profile}">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Profile
                     </a>
                 </li>
             </ul>

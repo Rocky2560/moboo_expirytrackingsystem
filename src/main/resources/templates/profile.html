@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Moboo Inventory</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            --danger-gradient: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            --orange-gradient: linear-gradient(135deg, #fda085 0%, #f6d365 100%);
+        }
+
+        body {
+            background-color: #f8f9fc;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            background: white;
+            height: 100vh;
+            position: fixed;
+            width: 250px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar .nav-link {
+            color: #333;
+            font-weight: 500;
+            padding: 10px 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+        }
+
+        .sidebar .nav-link.active,
+        .sidebar .nav-link:hover {
+            background: var(--primary-gradient);
+            color: white !important;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                left: -250px;
+                z-index: 1050;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .profile-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .btn-gradient {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .logout-btn {
+            background: white;
+            color: #dc3545;
+            border: 2px solid #dc3545;
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logout-btn:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .small-text {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .user-role {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sidebar-logo {
+            width: 30px;
+            height: 30px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .sidebar-user {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-item {
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin: 5px 15px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem; /* Larger font size for menu items */
+            font-weight: 500;
+        }
+
+        .sidebar-item:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+
+        .sidebar-active {
+            background: var(--primary-gradient) !important;
+            color: white !important;
+            border-radius: 10px;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        /* Password Strength Indicator */
+        .password-strength {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .strength-meter {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .strength-meter-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        .strength-text {
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .weak {
+            background: #dc3545 !important;
+        }
+
+        .medium {
+            background: #ffc107 !important;
+        }
+
+        .strong {
+            background: #28a745 !important;
+        }
+
+        /* Password Requirements */
+        .password-requirements {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .requirement {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .requirement:last-child {
+            margin-bottom: 0;
+        }
+
+        .requirement i {
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+        .requirement.met i {
+            color: #28a745;
+        }
+
+        .requirement.not-met i {
+            color: #dc3545;
+        }
+
+        /* Custom styles for sidebar items to match the image */
+        .sidebar-item i {
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+            border-radius: 10px;
+        }
+
+        .sidebar-item:not(.active):hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+
+        .sidebar-item.active i {
+            color: white;
+        }
+
+        /* Logout button styling to match image */
+        .sidebar-footer .logout-btn {
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 10px 20px;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .sidebar-footer .logout-btn i {
+            font-size: 1.1rem;
+        }
+
+        /* Center the profile forms */
+        .profile-forms-container {
+            display: flex;
+            justify-content: center;
+            min-height: 400px;
+        }
+
+        .profile-form-card {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        /* Message styling */
+        .alert {
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" th:if="${session.user == null}">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">Moboo Inventory Login</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/login}" method="post">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-gradient">Sign In</button>
+                    </div>
+                </form>
+                <div class="text-center mt-3 text-muted small">
+                    <p><strong>Admin:</strong> admin@moboo.com / admin123</p>
+                    <p><strong>Franchise:</strong> franchise@moboo.com / franchise123</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Layout -->
+<div th:if="${session.user != null}">
+    <!-- Sidebar -->
+    <nav class="sidebar d-none d-md-block">
+        <div class="p-4">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-primary text-white p-2 rounded-circle me-3">
+                    <i class="fas fa-mug-hot fa-lg"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 navbar-brand">Moboo Inventory</h5>
+                    <small class="text-muted" th:text="${session.userRole}">Role</small>
+                </div>
+            </div>
+
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/dashboard}">
+                        <i class="fas fa-home me-2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">
+                        <i class="fas fa-box me-2"></i> Inventory
+                    </a>
+                </li>
+                <li class="nav-item" th:if="${session.userRole == 'ADMIN'}">
+                    <a class="nav-link" th:href="@{/franchises}">
+                        <i class="fas fa-store me-2"></i> Franchises
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/alerts}">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Alerts
+                    </a>
+                </li>
+            </ul>
+
+            <div class="mt-4">
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container-fluid">
+                <h4>My Profile</h4>
+                <div class="d-flex">
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-2"></i>
+                            <span th:text="${session.userName}">User Name</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" class="d-inline">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid py-4">
+            <!-- Page Title -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2>My Profile</h2>
+                    <p class="text-muted">Manage your account information</p>
+                </div>
+            </div>
+
+            <!-- Profile Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="profile-header">
+                        <div class="profile-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h3 class="mb-0" th:text="${session.userName}">Admin User</h3>
+                        <div class="user-role" th:text="${session.userRole}">ADMIN</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div class="row justify-content-center mb-4">
+                <div class="col-lg-8 col-xl-6">
+                    <!-- Success Message -->
+                    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <span th:text="${successMessage}">Success Changed</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span th:text="${errorMessage}">Error</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Form - Centered -->
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-xl-6">
+                    <div class="card profile-form-card">
+                        <div class="card-body">
+                            <!-- Update Email Section -->
+                            <form th:action="@{/profile/update-email}" method="post">
+                                <div class="mb-4">
+                                    <h5 class="section-title"><i class="fas fa-envelope me-2"></i> Update Email</h5>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Current Email</label>
+                                        <input type="email" class="form-control"
+                                               th:value="${session.user}"
+                                               readonly>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">New Email Address</label>
+                                        <input type="email" class="form-control" name="newEmail"
+                                               placeholder="Enter your new email address" required>
+                                        <small class="form-text text-muted">Enter your new email address</small>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Password</label>
+                                        <input type="password" class="form-control" name="currentPassword"
+                                               placeholder="Enter your current password to confirm changes" required>
+                                        <small class="form-text text-muted">Enter your current password to confirm changes</small>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-gradient">
+                                        <i class="fas fa-save me-2"></i> Update Email
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- Change Password Section -->
+                            <form th:action="@{/profile/update-password}" method="post">
+                                <div>
+                                    <h5 class="section-title"><i class="fas fa-lock me-2"></i> Change Password</h5>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Current Password</label>
+                                        <input type="password" class="form-control" name="currentPassword"
+                                               placeholder="Enter your current password" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">New Password</label>
+                                        <input type="password" class="form-control" name="newPassword"
+                                               placeholder="Enter your new password"
+                                               id="newPassword" oninput="checkPasswordStrength()" required>
+
+                                        <!-- Password Strength Indicator -->
+                                        <div id="passwordStrength" class="password-strength">
+                                            <div class="strength-meter">
+                                                <div id="strengthFill" class="strength-meter-fill"></div>
+                                            </div>
+                                            <div id="strengthText" class="strength-text"></div>
+                                        </div>
+                                        <!-- Password Requirements -->
+                                        <div class="password-requirements">
+                                            <div class="requirement" id="lengthReq">
+                                                <i class="fas fa-circle"></i> At least 8 characters
+                                            </div>
+                                            <div class="requirement" id="uppercaseReq">
+                                                <i class="fas fa-circle"></i> At least one uppercase letter
+                                            </div>
+                                            <div class="requirement" id="lowercaseReq">
+                                                <i class="fas fa-circle"></i> At least one lowercase letter
+                                            </div>
+                                            <div class="requirement" id="numberReq">
+                                                <i class="fas fa-circle"></i> At least one number
+                                            </div>
+                                            <div class="requirement" id="specialReq">
+                                                <i class="fas fa-circle"></i> At least one special character
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Confirm New Password</label>
+                                        <input type="password" class="form-control" name="confirmPassword"
+                                               placeholder="Confirm your new password"
+                                               id="confirmPassword" oninput="checkPasswordMatch()" required>
+
+                                        <div id="passwordMatch" class="small-text" style="display: none;"></div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-gradient" id="changePasswordBtn" disabled>
+                                        <i class="fas fa-key me-2"></i> Change Password
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Auto-show login modal if user is not logged in
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) {
+            const modal = new bootstrap.Modal(loginModal);
+            modal.show();
+        }
+    });
+
+    // Password strength validation
+    function checkPasswordStrength() {
+        const password = document.getElementById('newPassword').value;
+        const strengthFill = document.getElementById('strengthFill');
+        const strengthText = document.getElementById('strengthText');
+        const passwordStrength = document.getElementById('passwordStrength');
+
+        // Requirements
+        const hasLength = password.length >= 8;
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasLowercase = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+        // Update requirement indicators
+        updateRequirement('lengthReq', hasLength, 'At least 8 characters');
+        updateRequirement('uppercaseReq', hasUppercase, 'At least one uppercase letter');
+        updateRequirement('lowercaseReq', hasLowercase, 'At least one lowercase letter');
+        updateRequirement('numberReq', hasNumber, 'At least one number');
+        updateRequirement('specialReq', hasSpecial, 'At least one special character');
+
+        // Calculate strength
+        const requirementsMet = [hasLength, hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
+
+        if (password.length === 0) {
+            passwordStrength.style.display = 'none';
+            document.getElementById('changePasswordBtn').disabled = true;
+            return;
+        }
+
+        passwordStrength.style.display = 'block';
+
+        if (requirementsMet === 5) {
+            // Strong password
+            strengthFill.style.width = '100%';
+            strengthFill.className = 'strength-meter-fill strong';
+            strengthText.textContent = 'Strong password';
+            strengthText.style.color = '#28a745';
+        } else if (requirementsMet >= 3) {
+            // Medium password
+            strengthFill.style.width = '66%';
+            strengthFill.className = 'strength-meter-fill medium';
+            strengthText.textContent = 'Medium strength';
+            strengthText.style.color = '#ffc107';
+        } else {
+            // Weak password
+            strengthFill.style.width = '33%';
+            strengthFill.className = 'strength-meter-fill weak';
+            strengthText.textContent = 'Weak password';
+            strengthText.style.color = '#dc3545';
+        }
+
+        // Check password match
+        checkPasswordMatch();
+    }
+
+    function updateRequirement(elementId, isMet, text) {
+        const element = document.getElementById(elementId);
+        if (isMet) {
+            element.className = 'requirement met';
+            element.innerHTML = '<i class="fas fa-check-circle"></i>' + text;
+        } else {
+            element.className = 'requirement not-met';
+            element.innerHTML = '<i class="fas fa-circle"></i>' + text;
+        }
+    }
+
+    function checkPasswordMatch() {
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const matchDiv = document.getElementById('passwordMatch');
+
+        if (confirmPassword.length === 0) {
+            matchDiv.style.display = 'none';
+            return;
+        }
+
+        matchDiv.style.display = 'block';
+
+        if (newPassword === confirmPassword) {
+            matchDiv.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Passwords match';
+            matchDiv.className = 'small-text text-success';
+
+            // Only enable button if password is strong AND passwords match
+            const requirementsMet = [
+                newPassword.length >= 8,
+                /[A-Z]/.test(newPassword),
+                /[a-z]/.test(newPassword),
+                /[0-9]/.test(newPassword),
+                /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword)
+            ].filter(Boolean).length === 5;
+
+            document.getElementById('changePasswordBtn').disabled = !requirementsMet;
+        } else {
+            matchDiv.innerHTML = '<i class="fas fa-times-circle text-danger me-2"></i>Passwords do not match';
+            matchDiv.className = 'small-text text-danger';
+            document.getElementById('changePasswordBtn').disabled = true;
+        }
+    }
+</script>
+</body>
+</html>

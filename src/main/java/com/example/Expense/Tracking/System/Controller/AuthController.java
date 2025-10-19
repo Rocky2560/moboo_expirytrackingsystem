@@ -86,6 +86,8 @@ public String login(@RequestParam String email,
             session.setAttribute("user", user.getEmail());
             session.setAttribute("userName", user.getName());
             session.setAttribute("userRole", user.getRole().name());
+            session.setAttribute("userId", user.getId());
+            session.setAttribute("userEmail", user.getEmail());
 
             // ✅ FIXED: Set actual franchise ID, not user ID
             if (user.getRole() == UserRole.FRANCHISE && user.getFranchise() != null) {

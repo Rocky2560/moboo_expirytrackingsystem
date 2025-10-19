@@ -134,6 +134,7 @@ public class DashboardController {
 //                    }
             }
         }
+        model.addAttribute("userEmail", userEmail);
         model.addAttribute("currentPage", "dashboard");
         return "dashboard";
     }
