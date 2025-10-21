@@ -20,7 +20,8 @@ public class Franchise {
     private String email;
 
 //    @NotBlank
-//    private String address;
+//    private String address
+    private String password;
 
     @OneToMany(mappedBy = "franchise", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<InventoryItem> inventoryItems;
@@ -31,7 +32,7 @@ public class Franchise {
     public Franchise(String name, String email) {
         this.name = name;
         this.email = email;
-//        this.address = address;
+        this.password = password;
     }
 
     // Getters and Setters
@@ -40,6 +41,10 @@ public class Franchise {
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public Long getPassword() { return id; }
+    public void setPassword(String password) { this.password = password; }
+
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

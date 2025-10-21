@@ -689,6 +689,7 @@
 </div>
 
 <!-- Add Franchise Modal -->
+<!-- Add Franchise Modal -->
 <div class="modal fade" id="addFranchiseModal" tabindex="-1" th:if="${session.userRole == 'ADMIN'}">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -696,7 +697,7 @@
                 <h5 class="modal-title">Add New Franchise</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{/franchises/add}" method="post">
+            <form th:action="@{/franchises/add}" method="post" id="addFranchiseForm">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Shop Name</label>
@@ -706,24 +707,200 @@
                         <label class="form-label">Email Address</label>
                         <input type="email" class="form-control" name="email" required>
                     </div>
-<!--                    <div class="mb-3">-->
-<!--                        <label class="form-label">Address</label>-->
-<!--&lt;!&ndash;                        <input type="text" class="form-control" name="address" required>&ndash;&gt;-->
-<!--                        <input type="text" class="form-control" id="postcode" placeholder="Enter postcode" />-->
-<!--                        <button type="button" onclick="lookupAddress()">Find Address</button>-->
-<!--                        <div id="addressList"></div>-->
-<!--                    </div>-->
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="franchisePassword" name="password" required minlength="8"
+                               placeholder="Min. 8 characters with uppercase, number & symbol">
+                        <!-- Password strength meter -->
+                        <div class="mt-2">
+                            <div class="progress" style="height: 6px; border-radius: 3px; display: none;" id="passwordStrengthBar">
+                                <div class="progress-bar" id="passwordStrengthFill" style="width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                            <small class="form-text text-muted" id="passwordHelp"></small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmFranchisePassword" name="confirmPassword" required
+                               placeholder="Re-enter password">
+                        <div class="invalid-feedback" id="passwordMismatchFeedback">
+                            Passwords do not match.
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success-gradient">Add Franchise</button>
+                    <button type="submit" class="btn btn-success-gradient" id="submitFranchiseBtn">Add Franchise</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+<!--<div class="modal fade" id="addFranchiseModal" tabindex="-1" th:if="${session.userRole == 'ADMIN'}">-->
+<!--    <div class="modal-dialog">-->
+<!--        <div class="modal-content">-->
+<!--            <div class="modal-header">-->
+<!--                <h5 class="modal-title">Add New Franchise</h5>-->
+<!--                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>-->
+<!--            </div>-->
+<!--            <form th:action="@{/franchises/add}" method="post">-->
+<!--                <div class="modal-body">-->
+<!--                    <div class="mb-3">-->
+<!--                        <label class="form-label">Shop Name</label>-->
+<!--                        <input type="text" class="form-control" name="name" required>-->
+<!--                    </div>-->
+<!--                    <div class="mb-3">-->
+<!--                        <label class="form-label">Email Address</label>-->
+<!--                        <input type="email" class="form-control" name="email" required>-->
+<!--                    </div>-->
+<!--&lt;!&ndash;                    <div class="mb-3">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <label class="form-label">Address</label>&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                        <input type="text" class="form-control" name="address" required>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;                        <input type="text" class="form-control" id="postcode" placeholder="Enter postcode" />&ndash;&gt;-->
+<!--&lt;!&ndash;                        <button type="button" onclick="lookupAddress()">Find Address</button>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <div id="addressList"></div>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </div>&ndash;&gt;-->
+<!--                </div>-->
+<!--                <div class="modal-footer">-->
+<!--                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>-->
+<!--                    <button type="submit" class="btn btn-success-gradient">Add Franchise</button>-->
+<!--                </div>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ... your existing code ...
+
+        // ===== PASSWORD STRENGTH & VALIDATION FOR FRANCHISE MODAL =====
+        const passwordInput = document.getElementById('franchisePassword');
+        const confirmPasswordInput = document.getElementById('confirmFranchisePassword');
+        const strengthBar = document.getElementById('passwordStrengthBar');
+        const strengthFill = document.getElementById('passwordStrengthFill');
+        const passwordHelp = document.getElementById('passwordHelp');
+        const mismatchFeedback = document.getElementById('passwordMismatchFeedback');
+        const form = document.getElementById('addFranchiseForm');
+        const submitBtn = document.getElementById('submitFranchiseBtn');
+
+        if (!passwordInput || !confirmPasswordInput) return;
+
+        // Criteria for strong password
+        const checks = {
+            length: false,
+            uppercase: false,
+            lowercase: false,
+            number: false,
+            special: false
+        };
+
+        function updatePasswordStrength() {
+            const value = passwordInput.value;
+            const errors = [];
+
+            // Reset checks
+            checks.length = value.length >= 8;
+            checks.uppercase = /[A-Z]/.test(value);
+            checks.lowercase = /[a-z]/.test(value);
+            checks.number = /[0-9]/.test(value);
+            checks.special = /[^A-Za-z0-9]/.test(value);
+
+            if (!checks.length) errors.push("At least 8 characters");
+            if (!checks.uppercase) errors.push("One uppercase letter");
+            if (!checks.lowercase) errors.push("One lowercase letter");
+            if (!checks.number) errors.push("One number");
+            if (!checks.special) errors.push("One special character (!@#$%^&*)");
+
+            // Update strength bar
+            const passed = Object.values(checks).filter(Boolean).length;
+            const percent = (passed / 5) * 100;
+            strengthFill.style.width = percent + '%';
+
+            // Color based on strength
+            if (percent < 40) {
+                strengthFill.className = 'progress-bar bg-danger';
+            } else if (percent < 80) {
+                strengthFill.className = 'progress-bar bg-warning';
+            } else {
+                strengthFill.className = 'progress-bar bg-success';
+            }
+
+            // Show/hide bar
+            strengthBar.style.display = value ? 'block' : 'none';
+
+            // Show help text
+            if (errors.length > 0) {
+                passwordHelp.textContent = "Missing: " + errors.join(", ");
+                passwordHelp.className = "form-text text-muted";
+            } else {
+                passwordHelp.textContent = "✅ Strong password!";
+                passwordHelp.className = "form-text text-success";
+            }
+        }
+
+        function validatePasswordMatch() {
+            const pass = passwordInput.value;
+            const confirm = confirmPasswordInput.value;
+            const isMatch = pass === confirm && pass.length > 0;
+
+            if (confirm.length > 0) {
+                if (!isMatch) {
+                    confirmPasswordInput.classList.add('is-invalid');
+                    mismatchFeedback.style.display = 'block';
+                } else {
+                    confirmPasswordInput.classList.remove('is-invalid');
+                    mismatchFeedback.style.display = 'none';
+                }
+            } else {
+                confirmPasswordInput.classList.remove('is-invalid');
+                mismatchFeedback.style.display = 'none';
+            }
+
+            return isMatch;
+        }
+
+        // Event listeners
+        passwordInput.addEventListener('input', updatePasswordStrength);
+        confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+
+        // Form submission validation
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const allChecksPassed = Object.values(checks).every(Boolean);
+                const passwordsMatch = validatePasswordMatch();
+
+                if (!allChecksPassed || !passwordsMatch) {
+                    e.preventDefault();
+                    if (!allChecksPassed) {
+                        passwordHelp.textContent = "Please meet all password requirements.";
+                        passwordHelp.className = "form-text text-danger";
+                    }
+                    if (!passwordsMatch) {
+                        confirmPasswordInput.classList.add('is-invalid');
+                        mismatchFeedback.style.display = 'block';
+                    }
+                }
+            });
+        }
+
+        // Reset validation when modal is closed
+        const addFranchiseModal = document.getElementById('addFranchiseModal');
+        if (addFranchiseModal) {
+            addFranchiseModal.addEventListener('hidden.bs.modal', function () {
+                passwordInput.value = '';
+                confirmPasswordInput.value = '';
+                strengthBar.style.display = 'none';
+                strengthFill.style.width = '0%';
+                passwordHelp.textContent = '';
+                confirmPasswordInput.classList.remove('is-invalid');
+                mismatchFeedback.style.display = 'none';
+            });
+        }
+    });
+</script>
+
 <!-- Add this script before the closing </body> tag -->
 <script>
     async function lookupAddress() {
