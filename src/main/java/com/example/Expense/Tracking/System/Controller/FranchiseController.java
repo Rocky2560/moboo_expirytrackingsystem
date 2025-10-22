@@ -134,6 +134,7 @@ public class FranchiseController {
     @PostMapping("franchises/add")
     public String addFranchise(@RequestParam String name,
                                @RequestParam String email,
+                               @RequestParam String password,
                                HttpSession session) {
         Franchise franchise = new Franchise(name, email);
         franchiseService.saveFranchise(franchise);
@@ -142,7 +143,7 @@ public class FranchiseController {
         String userEmail = (String) session.getAttribute("user");
         User adminUser = userService.findByEmail(userEmail).orElse(null);
         if (adminUser != null) {
-            User franchiseUser = new User(name, email, "franchise123", com.example.Expense.Tracking.System.Enum.UserRole.FRANCHISE);
+            User franchiseUser = new User(name, email, password, com.example.Expense.Tracking.System.Enum.UserRole.FRANCHISE);
             franchiseUser.setFranchise(franchise);
             userService.saveUser(franchiseUser);
 
@@ -194,12 +195,12 @@ public class FranchiseController {
     public String updateFranchise(@PathVariable Long id,
                                   @RequestParam String name,
                                   @RequestParam String email,
-                                  @RequestParam String address) {
+                                  @RequestParam String password) {
         Franchise franchise = franchiseService.findById(id).orElse(null);
         if (franchise != null) {
             franchise.setName(name);
             franchise.setEmail(email);
-//            franchise.setAddress(address);
+            franchise.setPassword(password);
             franchiseService.saveFranchise(franchise);
         }
 
