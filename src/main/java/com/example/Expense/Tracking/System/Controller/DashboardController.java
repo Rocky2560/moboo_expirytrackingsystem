@@ -44,6 +44,7 @@ public class DashboardController {
 //        if (UserRole.ADMIN.name().equals(userRole)) {
             // Get admin's franchise from session
             Long adminFranchiseId = (Long) session.getAttribute("franchiseId");
+        System.out.println(session.getAttribute("franchiseId"));
 
             if (adminFranchiseId != null) {
                 Franchise adminFranchise = franchiseService.findById(adminFranchiseId).orElse(null);
@@ -97,6 +98,7 @@ public class DashboardController {
                     List<InventoryItem> filteredItem = filterItemsByStatus(franchiseItems, statusFilter);
 
                     Long FranchiseId = (Long) session.getAttribute("franchiseId");
+
 
                     if (FranchiseId != null) {
                         Franchise Franchise = franchiseService.findById(FranchiseId).orElse(null);

@@ -284,6 +284,7 @@ public String inventoryDashboard(HttpSession session, Model model,
 
         String userRole = (String) session.getAttribute("userRole");
         Franchise franchise;
+        System.out.println(franchiseId);
 
         if ("ADMIN".equals(userRole) && franchiseId != null) {
             franchise = franchiseService.findById(franchiseId).orElse(null);

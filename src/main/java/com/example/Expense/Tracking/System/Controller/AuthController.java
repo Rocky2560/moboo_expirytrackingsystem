@@ -105,6 +105,9 @@ public String login(@RequestParam String email,
             Authentication auth = new UsernamePasswordAuthenticationToken(user.getEmail(), null, authorities);
             SecurityContextHolder.getContext().setAuthentication(auth);
 
+
+            session.setAttribute("franchiseId", user.getId());
+//            System.out.println(session.getAttribute("franchiseId"));
             return "redirect:/dashboard";
         }
     }
