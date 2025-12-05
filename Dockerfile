@@ -2,26 +2,25 @@
 FROM maven:3.9.3-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy pom.xml and download dependencies first (cached)
+# Copy pom.xml and pre-download dependencies
 COPY pom.xml .
 RUN mvn dependency:go-offline
 
-# Copy source code
+# Copy source files
 COPY src ./src
 
 # Build the JAR
 RUN mvn clean package -DskipTests
 
-# Stage 2: Run the app with minimal JDK image
-FROM openjdk:17-jdk-slim
+# Stage 2: Minimal runtime image
+FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
-# Copy the JAR from build stage
+# Copy the built JAR
 COPY --from=build /app/target/*.jar app.jar
 
-# Use dynamic PORT for Render
+# Render needs PORT env
 ENV PORT=8080
 EXPOSE ${PORT}
 
-# Run the app
 ENTRYPOINT ["java", "-jar", "app.jar"]
